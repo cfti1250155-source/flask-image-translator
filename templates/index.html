@@ -34,23 +34,23 @@
         </form>
 
         <!-- 結果表示部分 -->
-        <% if ocr_text or translated_text %>
+        {% if ocr_text or translated_text %}
         <div class="mt-8 space-y-4 pt-6 border-t border-slate-700">
-            <% if ocr_text %>
+            {% if ocr_text %}
             <div>
                 <h2 class="text-sm font-medium text-slate-400 mb-1">抽出されたテキスト (OCR)</h2>
-                <div class="p-4 bg-slate-900 rounded-xl border border-slate-700 text-slate-200 text-sm whitespace-pre-wrap"><%= ocr_text %></div>
+                <div class="p-4 bg-slate-900 rounded-xl border border-slate-700 text-slate-200 text-sm whitespace-pre-wrap">{{ ocr_text }}</div>
             </div>
-            <% endif %>
+            {% endif %}
 
-            <% if translated_text %>
+            {% if translated_text %}
             <div>
                 <h2 class="text-sm font-medium text-indigo-400 mb-1">翻訳・AI校正結果</h2>
-                <div class="p-4 bg-indigo-950/50 rounded-xl border border-indigo-800 text-indigo-100 text-base font-medium whitespace-pre-wrap"><%= translated_text %></div>
+                <div class="p-4 bg-indigo-950/50 rounded-xl border border-indigo-800 text-indigo-100 text-base font-medium whitespace-pre-wrap">{{ translated_text }}</div>
             </div>
-            <% endif %>
+            {% endif %}
         </div>
-        <% endif %>
+        {% endif %}
 
     </div>
 
