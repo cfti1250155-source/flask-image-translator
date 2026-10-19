@@ -2,14 +2,14 @@ import io
 import os
 from flask import Flask, render_template, request
 from google.cloud import vision
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 from google import genai
 
 app = Flask(__name__)
 
 # クライアントの初期化（Vision API のみ Google Cloud を使用）
 vision_client = vision.ImageAnnotatorClient()
-translator = Translator()
+translator = GoogleTranslator(source='auto', target='ja')
 
 # Gemini API クライアント（環境変数 GEMINI_API_KEY を使用）
 ai_client = genai.Client() if os.environ.get("GEMINI_API_KEY") else None
@@ -33,10 +33,8 @@ def index():
             if texts:
                 ocr_text = texts[0].description
                 
-                # 2. 完全無料ライブラリで翻訳 ＆ 言語判定
-                translation_res = translator.translate(ocr_text, dest='ja')
-                raw_translation = translation_res.text
-                detected_lang_display = translation_res.src.upper()
+                # 2. 完全無料ライブラリ（deep-translator）で翻訳
+                raw_translation = translator.translate(ocr_text)
 
                 # 3. Gemini API で自然な日本語に整える（APIキー設定時のみ）
                 if ai_client:
