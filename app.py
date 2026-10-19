@@ -7,13 +7,6 @@ from google import genai
 
 app = Flask(__name__)
 
-# クライアントの初期化（Vision API のみ Google Cloud を使用）
-vision_client = vision.ImageAnnotatorClient()
-translator = GoogleTranslator(source='auto', target='ja')
-
-# Gemini API クライアント（環境変数 GEMINI_API_KEY を使用）
-ai_client = genai.Client() if os.environ.get("GEMINI_API_KEY") else None
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
     ocr_text = ''
@@ -26,19 +19,29 @@ def index():
             content = file.read()
             
             # 1. Vision API で文字認識
-            image = vision.Image(content=content)
-            response = vision_client.text_detection(image=image)
-            texts = response.text_annotations
+            try:
+                vision_client = vision.ImageAnnotatorClient()
+                image = vision.Image(content=content)
+                response = vision_client.text_detection(image=image)
+                texts = response.text_annotations
+                if texts:
+                    ocr_text = texts[0].description
+            except Exception as e:
+                ocr_text = f"文字認識エラー: {e}"
 
-            if texts:
-                ocr_text = texts[0].description
-                
-                # 2. 完全無料ライブラリ（deep-translator）で翻訳
-                raw_translation = translator.translate(ocr_text)
+            # 2. deep-translator で翻訳
+            if ocr_text and not ocr_text.startswith("文字認識エラー"):
+                try:
+                    translator = GoogleTranslator(source='auto', target='ja')
+                    raw_translation = translator.translate(ocr_text)
+                except Exception as e:
+                    raw_translation = f"翻訳エラー: {e}"
 
-                # 3. Gemini API で自然な日本語に整える（APIキー設定時のみ）
-                if ai_client:
+                # 3. Gemini API で文章校正
+                api_key = os.environ.get("GEMINI_API_KEY")
+                if api_key and not raw_translation.startswith("翻訳エラー"):
                     try:
+                        ai_client = genai.Client(api_key=api_key)
                         prompt = f"以下の文章の意味を維持しつつ、自然で読みやすい日本語に校正してください。余計な解説は含めず文章のみを出力してください:\n\n{raw_translation}"
                         res = ai_client.models.generate_content(
                             model='gemini-2.5-flash',
@@ -46,8 +49,7 @@ def index():
                         )
                         translated_text = res.text
                     except Exception as e:
-                        print(f"Gemini error: {e}")
-                        translated_text = raw_translation
+                        translated_text = f"{raw_translation} (※AI整文スキップ: {e})"
                 else:
                     translated_text = raw_translation
 
