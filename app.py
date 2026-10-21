@@ -17,41 +17,45 @@ def index():
     translated_text = ''
 
     if request.method == 'POST':
+        direct_text = request.form.get('direct_text')
         file = request.files.get('image')
-        if file and file.filename != '':
+
+        # 1. 入力元の判定（テキスト直接入力 vs 画像アップロード）
+        if direct_text and direct_text.strip() != '':
+            ocr_text = direct_text.strip()
+        elif file and file.filename != '':
             try:
-                # 1. OCR処理
                 image = Image.open(file.stream)
                 ocr_text = pytesseract.image_to_string(image, lang='eng+jpn')
             except Exception as e:
                 ocr_text = f"文字認識エラー: {e}"
 
-            # 2. 翻訳処理
-            if ocr_text and not ocr_text.startswith("文字認識エラー"):
-                if client:
-                    try:
-                        prompt = f"""
-                        以下の文章の「元の言語」を判定し、自然で読みやすい日本語に翻訳・校正してください。
-                        余計な解説は含めず、必ず以下の形式のみで出力してください：
+        # 2. Geminiによる言語判定 & 翻訳処理
+        if ocr_text and not ocr_text.startswith("文字認識エラー"):
+            if client:
+                try:
+                    prompt = f"""
+以下の文章の「元の言語」を判定し、自然で読みやすい日本語に翻訳・校正してください。
+余計な解説は含めず、必ず以下の形式のみで出力してください：
 
-                        【判定言語】
-                        （ここに判定した言語名を出力。例：英語、フランス語、中国語など）
+【判定言語】
+（ここに判定した言語名を出力。例：英語、フランス語、中国語など）
 
-                        【翻訳・校正結果】
-                        （ここに翻訳後の日本語のみを出力）
+【翻訳・校正結果】
+（ここに翻訳後の日本語のみを出力）
 
-                        対象文章：
-                        {ocr_text}
-                        """
-                        response = client.models.generate_content(
-                            model='gemini-3.8-flash',
-                            contents=prompt,
-                        )
-                        translated_text = response.text
-                    except Exception as e:
-                        translated_text = f"AI翻訳エラー: {e}"
-                else:
-                    translated_text = "GEMINI_API_KEY が設定されていません。"
+対象文章：
+{ocr_text}
+"""
+                    response = client.models.generate_content(
+                        model='gemini-3.8-flash',
+                        contents=prompt,
+                    )
+                    translated_text = response.text
+                except Exception as e:
+                    translated_text = f"AI翻訳エラー: {e}"
+            else:
+                translated_text = "GEMINI_API_KEY が設定されていません。"
 
     return render_template('index.html', 
                            ocr_text=ocr_text, 
