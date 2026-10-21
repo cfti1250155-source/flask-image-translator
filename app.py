@@ -7,8 +7,6 @@ import pytesseract
 from PIL import Image
 
 # Render 内の Tesseract パスを明示的に指定
-pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
-
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
