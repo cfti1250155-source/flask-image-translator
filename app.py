@@ -30,9 +30,9 @@ def index():
                         ai_client = genai.Client(api_key=api_key)
                         prompt = f"以下の文章を自然で読みやすい日本語に翻訳・校正してください。余計な解説は含めず、翻訳後の文章のみを出力してください:\n\n{ocr_text}"
                         res = ai_client.models.generate_content(
-                            model='gemini-1.5-flash',
-                            contents=prompt
-                        )
+                        model='gemini-2.0-flash',
+                        contents=prompt
+                    )
                         translated_text = res.text
                     except Exception as e:
                         translated_text = f"AI翻訳エラー: {e}"
