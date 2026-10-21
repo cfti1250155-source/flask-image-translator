@@ -6,6 +6,9 @@ from google import genai
 import pytesseract
 from PIL import Image
 
+# Render 内の Tesseract パスを明示的に指定
+pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
+
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
@@ -18,7 +21,7 @@ def index():
         file = request.files.get('image')
         if file and file.filename != '':
             try:
-                # 1. Tesseract OCR で文字認識（軽量・カード不要）
+                # 1. Tesseract OCR で文字認識
                 image = Image.open(file.stream)
                 ocr_text = pytesseract.image_to_string(image, lang='eng+jpn')
             except Exception as e:
