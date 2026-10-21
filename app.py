@@ -1,11 +1,14 @@
 import io
 import os
 from flask import Flask, render_template, request
-from google.cloud import vision
 from deep_translator import GoogleTranslator
 from google import genai
+import easyocr
 
 app = Flask(__name__)
+
+# EasyOCR の初期化（英語・日本語に対応）
+reader = easyocr.Reader(['en', 'ja'])
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -18,18 +21,14 @@ def index():
         if file and file.filename != '':
             content = file.read()
             
-            # 1. Vision API で文字認識
+            # 1. EasyOCR で文字認識（クレジットカード完全不要）
             try:
-                vision_client = vision.ImageAnnotatorClient()
-                image = vision.Image(content=content)
-                response = vision_client.text_detection(image=image)
-                texts = response.text_annotations
-                if texts:
-                    ocr_text = texts[0].description
+                results = reader.readtext(content, detail=0)
+                ocr_text = "\n".join(results)
             except Exception as e:
                 ocr_text = f"文字認識エラー: {e}"
 
-            # 2. deep-translator で翻訳
+            # 2. deep-translator で日本語翻訳
             if ocr_text and not ocr_text.startswith("文字認識エラー"):
                 try:
                     translator = GoogleTranslator(source='auto', target='ja')
