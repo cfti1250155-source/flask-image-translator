@@ -3,12 +3,10 @@ import os
 from flask import Flask, render_template, request
 from deep_translator import GoogleTranslator
 from google import genai
-import easyocr
+import pytesseract
+from PIL import Image
 
 app = Flask(__name__)
-
-# EasyOCR の初期化（英語・日本語に対応）
-reader = easyocr.Reader(['en', 'ja'])
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -19,12 +17,10 @@ def index():
     if request.method == 'POST':
         file = request.files.get('image')
         if file and file.filename != '':
-            content = file.read()
-            
-            # 1. EasyOCR で文字認識（クレジットカード完全不要）
             try:
-                results = reader.readtext(content, detail=0)
-                ocr_text = "\n".join(results)
+                # 1. Tesseract OCR で文字認識（軽量・カード不要）
+                image = Image.open(file.stream)
+                ocr_text = pytesseract.image_to_string(image, lang='eng+jpn')
             except Exception as e:
                 ocr_text = f"文字認識エラー: {e}"
 
