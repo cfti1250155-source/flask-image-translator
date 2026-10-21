@@ -30,7 +30,19 @@ def index():
             if ocr_text and not ocr_text.startswith("文字認識エラー"):
                 if client:
                     try:
-                        prompt = f"以下の文章を自然で読みやすい日本語に翻訳・校正してください。余計な解説は含めず、翻訳後の文章のみを出力してください:\n\n{ocr_text}"
+                        prompt = f"""
+                        以下の文章の「元の言語」を判定し、自然で読みやすい日本語に翻訳・校正してください。
+                        余計な解説は含めず、必ず以下の形式のみで出力してください：
+
+                        【判定言語】
+                        （ここに判定した言語名を出力。例：英語、フランス語、中国語など）
+
+                        【翻訳・校正結果】
+                        （ここに翻訳後の日本語のみを出力）
+
+                        対象文章：
+                        {ocr_text}
+                        """
                         response = client.models.generate_content(
                             model='gemini-3.8-flash',
                             contents=prompt,
