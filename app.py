@@ -1,16 +1,15 @@
 import io
 import os
 from flask import Flask, render_template, request
-import google.generativeai as genai
+from google import genai
 import pytesseract
 from PIL import Image
 
 app = Flask(__name__)
 
-# Gemini API の初期化
+# APIキーの取得とクライアント初期化
 api_key = os.environ.get("GEMINI_API_KEY")
-if api_key:
-    genai.configure(api_key=api_key)
+client = genai.Client(api_key=api_key) if api_key else None
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -21,20 +20,22 @@ def index():
         file = request.files.get('image')
         if file and file.filename != '':
             try:
-                # 1. Tesseract OCR で文字認識
+                # 1. OCR処理
                 image = Image.open(file.stream)
                 ocr_text = pytesseract.image_to_string(image, lang='eng+jpn')
             except Exception as e:
                 ocr_text = f"文字認識エラー: {e}"
 
-            # 2. Gemini API で翻訳＆校正
+            # 2. 翻訳処理
             if ocr_text and not ocr_text.startswith("文字認識エラー"):
-                if api_key:
+                if client:
                     try:
-                        model = genai.GenerativeModel('gemini-1.5-flash')
                         prompt = f"以下の文章を自然で読みやすい日本語に翻訳・校正してください。余計な解説は含めず、翻訳後の文章のみを出力してください:\n\n{ocr_text}"
-                        res = model.generate_content(prompt)
-                        translated_text = res.text
+                        response = client.models.generate_content(
+                            model='gemini-2.5-flash',
+                            contents=prompt,
+                        )
+                        translated_text = response.text
                     except Exception as e:
                         translated_text = f"AI翻訳エラー: {e}"
                 else:
