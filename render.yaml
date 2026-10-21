@@ -1,6 +1,8 @@
 services:
   - type: web
-    name: flask-image-translator
-    env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn app:app"
+    name: flask-image-translator-docker
+    env: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
