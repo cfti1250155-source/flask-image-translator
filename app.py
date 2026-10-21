@@ -32,7 +32,7 @@ def index():
                     try:
                         prompt = f"以下の文章を自然で読みやすい日本語に翻訳・校正してください。余計な解説は含めず、翻訳後の文章のみを出力してください:\n\n{ocr_text}"
                         response = client.models.generate_content(
-                            model='gemini-2.5-flash',
+                            model='gemini-3.8-flash',
                             contents=prompt,
                         )
                         translated_text = response.text
