@@ -3,33 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>画像翻訳アプリ</title>
+    <title>{{ ui.title }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
 
     <div class="max-w-2xl w-full bg-slate-800 rounded-2xl shadow-xl border border-slate-700 p-6 md:p-8">
         
-        <!-- ヘッダー -->
+        <!-- ヘッダー & 言語変更ボタン -->
+        <div class="flex justify-between items-center mb-6">
+            <span class="bg-indigo-900/60 text-indigo-300 text-xs font-semibold px-3 py-1 rounded-full border border-indigo-700">
+                Target: {{ target_lang }}
+            </span>
+            <a href="/select-language" class="text-xs text-slate-400 hover:text-white underline">
+                🌐 {{ ui.change_lang }}
+            </a>
+        </div>
+
         <div class="text-center space-y-2 mb-6">
-            <h1 class="text-3xl font-bold tracking-tight text-white">📷 AI万能翻訳アプリ</h1>
-            <p class="text-slate-400 text-sm">画像をアップロードするか、テキストを直接入力して翻訳できます。</p>
+            <h1 class="text-3xl font-bold tracking-tight text-white">{{ ui.title }}</h1>
+            <p class="text-slate-400 text-sm">{{ ui.subtitle }}</p>
         </div>
 
         <!-- 1. テキスト直接入力フォーム -->
         <form action="/" method="POST" class="space-y-3 mb-6">
             <div>
-                <label class="block text-sm font-medium text-slate-300 mb-2">テキストを直接入力して翻訳</label>
-                <textarea name="direct_text" rows="3" class="w-full p-3 rounded-xl bg-slate-900 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-slate-500" placeholder="翻訳したい文章を入力..."></textarea>
+                <label class="block text-sm font-medium text-slate-300 mb-2">{{ ui.text_input_label }}</label>
+                <textarea name="direct_text" rows="3" class="w-full p-3 rounded-xl bg-slate-900 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-slate-500" placeholder="{{ ui.text_placeholder }}"></textarea>
             </div>
             <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-4 rounded-xl shadow-lg transition text-sm">
-                テキストを翻訳する
+                {{ ui.btn_text_translate }}
             </button>
         </form>
 
         <div class="relative flex py-2 items-center mb-6">
             <div class="flex-grow border-t border-slate-700"></div>
-            <span class="flex-shrink mx-4 text-slate-500 text-xs font-semibold">または</span>
+            <span class="flex-shrink mx-4 text-slate-500 text-xs font-semibold">{{ ui.or }}</span>
             <div class="flex-grow border-t border-slate-700"></div>
         </div>
 
@@ -38,16 +47,15 @@
             <div class="flex flex-col items-center justify-center w-full">
                 <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-slate-600 border-dashed rounded-xl cursor-pointer bg-slate-700/50 hover:bg-slate-700 transition">
                     <div class="flex flex-col items-center justify-center pt-4 pb-4">
-                        <p class="text-sm text-slate-300 font-medium">クリックして画像を選択</p>
+                        <p class="text-sm text-slate-300 font-medium">{{ ui.image_input_label }}</p>
                     </div>
-                    <!-- required を外してテキストだけでも送信可能にしています -->
                     <input type="file" name="image" accept="image/*" class="hidden" onchange="document.getElementById('file-name').innerText = this.files[0].name">
                 </label>
                 <p id="file-name" class="text-xs text-indigo-400 mt-2 h-4"></p>
             </div>
 
             <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg transition">
-                画像を翻訳する
+                {{ ui.btn_image_translate }}
             </button>
         </form>
 
@@ -56,14 +64,14 @@
         <div class="mt-8 space-y-4 pt-6 border-t border-slate-700">
             {% if ocr_text %}
             <div>
-                <h2 class="text-sm font-medium text-slate-400 mb-1">対象テキスト</h2>
+                <h2 class="text-sm font-medium text-slate-400 mb-1">{{ ui.target_text_label }}</h2>
                 <div class="p-4 bg-slate-900 rounded-xl border border-slate-700 text-slate-200 text-sm whitespace-pre-wrap">{{ ocr_text }}</div>
             </div>
             {% endif %}
 
             {% if translated_text %}
             <div>
-                <h2 class="text-sm font-medium text-indigo-400 mb-1">翻訳・AI校正結果</h2>
+                <h2 class="text-sm font-medium text-indigo-400 mb-1">{{ ui.result_label }}</h2>
                 <div class="p-4 bg-indigo-950/50 rounded-xl border border-indigo-800 text-indigo-100 text-base font-medium whitespace-pre-wrap">{{ translated_text }}</div>
             </div>
             {% endif %}

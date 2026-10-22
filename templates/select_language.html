@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Target Language</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-slate-800 rounded-2xl shadow-xl border border-slate-700 p-6 md:p-8 text-center">
+        
+        <!-- ヘッダー (英語) -->
+        <h1 class="text-2xl font-bold text-white mb-2">🌐 AI Multi-Translator</h1>
+        <p class="text-slate-400 text-sm mb-6">Select your target language to start</p>
+
+        <!-- リアルタイム検索バー -->
+        <div class="mb-4">
+            <input type="text" id="languageSearch" onkeyup="filterLanguages()" 
+                   placeholder="Search language..." 
+                   class="w-full p-3 rounded-xl bg-slate-900 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-slate-500">
+        </div>
+
+        <!-- 言語選択フォーム -->
+        <form action="/set-language" method="POST">
+            <div id="languageList" class="max-h-60 overflow-y-auto space-y-2 mb-6 text-left pr-1">
+                {% for lang in languages %}
+                <label class="lang-item flex items-center justify-between p-3 rounded-xl bg-slate-700/50 hover:bg-slate-700 cursor-pointer border border-slate-700 transition">
+                    <span class="text-sm font-medium text-slate-200">{{ lang }}</span>
+                    <input type="radio" name="target_lang" value="{{ lang }}" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" {% if loop.first %}checked{% endif %}>
+                </label>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg transition">
+                Continue to Translator
+            </button>
+        </form>
+
+    </div>
+
+    <!-- 検索用JavaScript -->
+    <script>
+        function filterLanguages() {
+            const input = document.getElementById('languageSearch').value.toLowerCase();
+            const items = document.getElementsByClassName('lang-item');
+            
+            for (let i = 0; i < items.length; i++) {
+                const text = items[i].innerText.toLowerCase();
+                if (text.includes(input)) {
+                    items[i].style.display = "flex";
+                } else {
+                    items[i].style.display = "none";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
