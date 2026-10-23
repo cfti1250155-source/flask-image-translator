@@ -12,15 +12,22 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "app-secret-key-12345")
 api_key = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key) if api_key else None
 
-# サポートする言語リスト
+# サポートする言語リスト（日本語＋英語表記）
 SUPPORTED_LANGUAGES = [
-    "Japanese", "English", "Spanish", "French", 
-    "German", "Chinese", "Korean", "Italian"
+    "日本語 (Japanese)", "英語 (English)", "スペイン語 (Spanish)", "フランス語 (French)", 
+    "ドイツ語 (German)", "中国語・簡体字 (Chinese Simplified)", "中国語・繁体字 (Chinese Traditional)", 
+    "韓国語 (Korean)", "イタリア語 (Italian)", "ロシア語 (Russian)", "ポルトガル語 (Portuguese)", 
+    "タイ語 (Thai)", "ベトナム語 (Vietnamese)", "インドネシア語 (Indonesian)", "トルコ語 (Turkish)", 
+    "アラビア語 (Arabic)", "ヒンディー語 (Hindi)", "オランダ語 (Dutch)", "ポーランド語 (Polish)", 
+    "スウェーデン語 (Swedish)", "ギリシャ語 (Greek)", "チェコ語 (Czech)", "ハンガリー語 (Hungarian)", 
+    "ルーマニア語 (Romanian)", "ウクライナ語 (Ukrainian)", "ヘブライ語 (Hebrew)", "マレー語 (Malay)", 
+    "ペルシア語 (Persian)", "タガログ語 (Tagalog)", "スワヒリ語 (Swahili)", "デンマーク語 (Danish)", 
+    "フィンランド語 (Finnish)", "ノルウェー語 (Norwegian)"
 ]
 
 # 各言語のUI表示テキスト
 UI_LABELS = {
-    "Japanese": {
+    "日本語": {
         "title": "📷 AI万能翻訳アプリ",
         "subtitle": "テキスト入力または画像アップロードで自動翻訳します。",
         "text_input_label": "テキストを直接入力して翻訳",
@@ -33,7 +40,7 @@ UI_LABELS = {
         "result_label": "翻訳・AI校正結果",
         "change_lang": "言語変更"
     },
-    "English": {
+    "英語": {
         "title": "📷 AI Multi-Translator",
         "subtitle": "Translate via direct text input or image upload.",
         "text_input_label": "Direct Text Translation",
@@ -45,24 +52,10 @@ UI_LABELS = {
         "target_text_label": "Source Text",
         "result_label": "Translation & AI Result",
         "change_lang": "Change Language"
-    },
-    "Spanish": {
-        "title": "📷 AI Multi-Traductor",
-        "subtitle": "Traduzca mediante texto directo o imagen.",
-        "text_input_label": "Traducción directa de texto",
-        "text_placeholder": "Ingrese el texto a traducir...",
-        "btn_text_translate": "Traducir Texto",
-        "or": "O",
-        "image_input_label": "Haga clic para seleccionar imagen",
-        "btn_image_translate": "Traducir Imagen",
-        "target_text_label": "Texto de Origen",
-        "result_label": "Resultado de Traducción IA",
-        "change_lang": "Cambiar Idioma"
     }
 }
 
-# 登録されていない言語用デフォルト（English）
-DEFAULT_UI = UI_LABELS["English"]
+DEFAULT_UI = UI_LABELS["日本語"]
 
 @app.route('/select-language')
 def select_language():
@@ -70,17 +63,19 @@ def select_language():
 
 @app.route('/set-language', methods=['POST'])
 def set_language():
-    target_lang = request.form.get('target_lang', 'Japanese')
-    session['target_lang'] = target_lang
+    selected = request.form.get('target_lang', '日本語 (Japanese)')
+    # 表示用の言語名（「 (Japanese)」などを除去した部分）を取り出す
+    clean_lang = selected.split(' (')[0]
+    session['target_lang'] = clean_lang
+    session['full_target_lang'] = selected
     return redirect(url_for('index'))
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    # 初回アクセスで言語未選択なら言語選択画面へリダイレクト
     if 'target_lang' not in session:
         return redirect(url_for('select_language'))
 
-    target_lang = session.get('target_lang', 'Japanese')
+    target_lang = session.get('target_lang', '日本語')
     ui = UI_LABELS.get(target_lang, DEFAULT_UI)
 
     ocr_text = ''
@@ -90,7 +85,6 @@ def index():
         direct_text = request.form.get('direct_text')
         file = request.files.get('image')
 
-        # 1. 入力判定
         if direct_text and direct_text.strip() != '':
             ocr_text = direct_text.strip()
         elif file and file.filename != '':
@@ -98,23 +92,22 @@ def index():
                 image = Image.open(file.stream)
                 ocr_text = pytesseract.image_to_string(image, lang='eng+jpn')
             except Exception as e:
-                ocr_text = f"OCR Error: {e}"
+                ocr_text = f"文字認識エラー: {e}"
 
-        # 2. Geminiによる翻訳処理（動的な言語指定）
-        if ocr_text and not ocr_text.startswith("OCR Error"):
+        if ocr_text and not ocr_text.startswith("文字認識エラー"):
             if client:
                 try:
                     prompt = f"""
-Identify the original language of the text below, and translate it naturally into 【{target_lang}】.
-Do not include extra explanations. Output strictly in this format:
+以下の文章の「元の言語」を判定し、自然で読みやすい【{target_lang}】に翻訳・校正してください。
+余計な解説は含めず、必ず以下の形式のみで出力してください：
 
-【Detected Language】
-(Name of the original language)
+【判定言語】
+（ここに判定した元の言語名を出力）
 
-【Translation Result】
-(Translated text in {target_lang})
+【翻訳・校正結果】
+（ここに【{target_lang}】への翻訳後の文章のみを出力）
 
-Text:
+対象文章：
 {ocr_text}
 """
                     response = client.models.generate_content(

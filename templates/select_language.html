@@ -10,14 +10,13 @@
 
     <div class="max-w-md w-full bg-slate-800 rounded-2xl shadow-xl border border-slate-700 p-6 md:p-8 text-center">
         
-        <!-- ヘッダー (英語) -->
         <h1 class="text-2xl font-bold text-white mb-2">🌐 AI Multi-Translator</h1>
         <p class="text-slate-400 text-sm mb-6">Select your target language to start</p>
 
         <!-- リアルタイム検索バー -->
         <div class="mb-4">
-            <input type="text" id="languageSearch" onkeyup="filterLanguages()" 
-                   placeholder="Search language..." 
+            <input type="text" id="languageSearch" oninput="filterLanguages()" 
+                   placeholder="Search language (e.g. タイ語, Thai)..." 
                    class="w-full p-3 rounded-xl bg-slate-900 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-slate-500">
         </div>
 
@@ -39,18 +38,19 @@
 
     </div>
 
-    <!-- 検索用JavaScript -->
     <script>
         function filterLanguages() {
-            const input = document.getElementById('languageSearch').value.toLowerCase();
+            const input = document.getElementById('languageSearch').value.toLowerCase().trim();
             const items = document.getElementsByClassName('lang-item');
             
             for (let i = 0; i < items.length; i++) {
                 const text = items[i].innerText.toLowerCase();
                 if (text.includes(input)) {
-                    items[i].style.display = "flex";
+                    items[i].classList.remove('hidden');
+                    items[i].classList.add('flex');
                 } else {
-                    items[i].style.display = "none";
+                    items[i].classList.remove('flex');
+                    items[i].classList.add('hidden');
                 }
             }
         }
