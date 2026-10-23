@@ -118,7 +118,7 @@ Return ONLY valid JSON matching this exact structure:
 }}
 """
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.8-flash',
                 contents=prompt
             )
             text_resp = response.text.strip()
@@ -185,7 +185,7 @@ Text:
 {ocr_text}
 """
                     response = client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-3.8-flash',
                         contents=prompt,
                     )
                     translated_text = response.text
