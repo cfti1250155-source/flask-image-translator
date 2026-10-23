@@ -24,7 +24,7 @@ SUPPORTED_LANGUAGES = [
     "Danish", "Finnish", "Norwegian"
 ]
 
-# 各言語のUI表示テキスト（主要言語は事前に定義し、その他の言語はAIが自動生成）
+# 各言語のUI表示テキスト（標準辞書）
 UI_CACHE = {
     "Japanese": {
         "title": "📷 AI万能翻訳アプリ",
@@ -90,37 +90,11 @@ UI_CACHE = {
         "target_text_label": "Quelltext",
         "result_label": "Übersetzungsergebnis",
         "change_lang": "Sprache wechseln"
-    },
-    "Chinese (Simplified)": {
-        "title": "📷 AI全能翻译器",
-        "subtitle": "通过直接输入文本或上传图片进行自动翻译。",
-        "text_input_label": "直接输入文本进行翻译",
-        "text_placeholder": "请输入要翻译的文本...",
-        "btn_text_translate": "翻译文本",
-        "or": "或",
-        "image_input_label": "点击选择图片",
-        "btn_image_translate": "翻译图片",
-        "target_text_label": "源文本",
-        "result_label": "翻译与AI润色结果",
-        "change_lang": "更改语言"
-    },
-    "Korean": {
-        "title": "📷 AI 만능 번역기",
-        "subtitle": "직접 텍스트를 입력하거나 이미지를 업로드하여 자동 번역합니다.",
-        "text_input_label": "텍스트를 직접 입력하여 번역",
-        "text_placeholder": "번역할 문장을 입력하세요...",
-        "btn_text_translate": "텍스트 번역하기",
-        "or": "또는",
-        "image_input_label": "클릭하여 이미지 선택",
-        "btn_image_translate": "이미지 번역하기",
-        "target_text_label": "대상 텍스트",
-        "result_label": "번역 및 AI 교정 결과",
-        "change_lang": "언어 변경"
     }
 }
 
 def get_ui_labels(target_lang):
-    """選択言語のUI文言を取得（未登録言語はGeminiで自動生成してキャッシュ）"""
+    """選択言語のUI文言を取得"""
     if target_lang in UI_CACHE:
         return UI_CACHE[target_lang]
 
@@ -144,7 +118,7 @@ Return ONLY valid JSON matching this exact structure:
 }}
 """
             response = client.models.generate_content(
-                model='gemini-3.8-flash',
+                model='gemini-2.5-flash',
                 contents=prompt
             )
             text_resp = response.text.strip()
@@ -158,7 +132,7 @@ Return ONLY valid JSON matching this exact structure:
         except Exception:
             pass
 
-    return UI_CACHE["Japanese"]
+    return UI_CACHE["English"]
 
 @app.route('/select-language')
 def select_language():
@@ -166,7 +140,7 @@ def select_language():
 
 @app.route('/set-language', methods=['POST'])
 def set_language():
-    target_lang = request.form.get('target_lang', 'Japanese')
+    target_lang = request.form.get('target_lang', 'English')
     session['target_lang'] = target_lang
     return redirect(url_for('index'))
 
@@ -175,7 +149,7 @@ def index():
     if 'target_lang' not in session:
         return redirect(url_for('select_language'))
 
-    target_lang = session.get('target_lang', 'Japanese')
+    target_lang = session.get('target_lang', 'English')
     ui = get_ui_labels(target_lang)
 
     ocr_text = ''
@@ -211,7 +185,7 @@ Text:
 {ocr_text}
 """
                     response = client.models.generate_content(
-                        model='gemini-3.8-flash',
+                        model='gemini-2.5-flash',
                         contents=prompt,
                     )
                     translated_text = response.text
