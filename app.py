@@ -1,4 +1,5 @@
 import io
+import json
 import os
 from flask import Flask, render_template, request, redirect, url_for, session
 from google import genai
@@ -12,7 +13,7 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "app-secret-key-12345")
 api_key = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key) if api_key else None
 
-# サポートする言語リスト（全33言語・英語表記のみ）
+# サポートする言語リスト（全33言語・英語表記）
 SUPPORTED_LANGUAGES = [
     "Japanese", "English", "Spanish", "French", "German", 
     "Chinese (Simplified)", "Chinese (Traditional)", "Korean", "Italian", "Russian", 
@@ -23,8 +24,8 @@ SUPPORTED_LANGUAGES = [
     "Danish", "Finnish", "Norwegian"
 ]
 
-# 各言語のUI表示テキスト
-UI_LABELS = {
+# 各言語のUI表示テキスト（主要言語は事前に定義し、その他の言語はAIが自動生成）
+UI_CACHE = {
     "Japanese": {
         "title": "📷 AI万能翻訳アプリ",
         "subtitle": "テキスト入力または画像アップロードで自動翻訳します。",
@@ -50,10 +51,114 @@ UI_LABELS = {
         "target_text_label": "Source Text",
         "result_label": "Translation & AI Result",
         "change_lang": "Change Language"
+    },
+    "Spanish": {
+        "title": "📷 Traductor Universal IA",
+        "subtitle": "Traduzca mediante entrada de texto directa o carga de imágenes.",
+        "text_input_label": "Ingrese texto directamente para traducir",
+        "text_placeholder": "Ingrese el texto a traducir...",
+        "btn_text_translate": "Traducir texto",
+        "or": "o",
+        "image_input_label": "Haga clic para seleccionar imagen",
+        "btn_image_translate": "Traducir imagen",
+        "target_text_label": "Texto de origen",
+        "result_label": "Resultado de traducción e IA",
+        "change_lang": "Cambiar idioma"
+    },
+    "French": {
+        "title": "📷 Traducteur Universel IA",
+        "subtitle": "Traduisez par saisie directe de texte ou téléchargement d'image.",
+        "text_input_label": "Saisir du texte directement pour traduire",
+        "text_placeholder": "Entrez le texte à traduire...",
+        "btn_text_translate": "Traduire le texte",
+        "or": "ou",
+        "image_input_label": "Cliquez pour sélectionner une image",
+        "btn_image_translate": "Traduire l'image",
+        "target_text_label": "Texte source",
+        "result_label": "Résultat de la traduction IA",
+        "change_lang": "Changer de langue"
+    },
+    "German": {
+        "title": "📷 KI-Multisprach-Übersetzer",
+        "subtitle": "Übersetzen Sie per Texteingabe oder Bild-Upload.",
+        "text_input_label": "Text direkt eingeben und übersetzen",
+        "text_placeholder": "Geben Sie den Text ein...",
+        "btn_text_translate": "Text übersetzen",
+        "or": "oder",
+        "image_input_label": "Klicken Sie, um ein Bild auszuwählen",
+        "btn_image_translate": "Bild übersetzen",
+        "target_text_label": "Quelltext",
+        "result_label": "Übersetzungsergebnis",
+        "change_lang": "Sprache wechseln"
+    },
+    "Chinese (Simplified)": {
+        "title": "📷 AI全能翻译器",
+        "subtitle": "通过直接输入文本或上传图片进行自动翻译。",
+        "text_input_label": "直接输入文本进行翻译",
+        "text_placeholder": "请输入要翻译的文本...",
+        "btn_text_translate": "翻译文本",
+        "or": "或",
+        "image_input_label": "点击选择图片",
+        "btn_image_translate": "翻译图片",
+        "target_text_label": "源文本",
+        "result_label": "翻译与AI润色结果",
+        "change_lang": "更改语言"
+    },
+    "Korean": {
+        "title": "📷 AI 만능 번역기",
+        "subtitle": "직접 텍스트를 입력하거나 이미지를 업로드하여 자동 번역합니다.",
+        "text_input_label": "텍스트를 직접 입력하여 번역",
+        "text_placeholder": "번역할 문장을 입력하세요...",
+        "btn_text_translate": "텍스트 번역하기",
+        "or": "또는",
+        "image_input_label": "클릭하여 이미지 선택",
+        "btn_image_translate": "이미지 번역하기",
+        "target_text_label": "대상 텍스트",
+        "result_label": "번역 및 AI 교정 결과",
+        "change_lang": "언어 변경"
     }
 }
 
-DEFAULT_UI = UI_LABELS["Japanese"]
+def get_ui_labels(target_lang):
+    """選択言語のUI文言を取得（未登録言語はGeminiで自動生成してキャッシュ）"""
+    if target_lang in UI_CACHE:
+        return UI_CACHE[target_lang]
+
+    if client:
+        try:
+            prompt = f"""
+Translate the following UI menu labels into {target_lang}.
+Return ONLY valid JSON matching this exact structure:
+{{
+  "title": "📷 AI Multi-Translator",
+  "subtitle": "Translate via direct text input or image upload.",
+  "text_input_label": "Direct Text Translation",
+  "text_placeholder": "Enter text to translate...",
+  "btn_text_translate": "Translate Text",
+  "or": "OR",
+  "image_input_label": "Click to select image",
+  "btn_image_translate": "Translate Image",
+  "target_text_label": "Source Text",
+  "result_label": "Translation & AI Result",
+  "change_lang": "Change Language"
+}}
+"""
+            response = client.models.generate_content(
+                model='gemini-3.8-flash',
+                contents=prompt
+            )
+            text_resp = response.text.strip()
+            if "```" in text_resp:
+                text_resp = text_resp.split("```")[1]
+                if text_resp.startswith("json"):
+                    text_resp = text_resp[4:].strip()
+            labels = json.loads(text_resp)
+            UI_CACHE[target_lang] = labels
+            return labels
+        except Exception:
+            pass
+
+    return UI_CACHE["Japanese"]
 
 @app.route('/select-language')
 def select_language():
@@ -71,7 +176,7 @@ def index():
         return redirect(url_for('select_language'))
 
     target_lang = session.get('target_lang', 'Japanese')
-    ui = UI_LABELS.get(target_lang, DEFAULT_UI)
+    ui = get_ui_labels(target_lang)
 
     ocr_text = ''
     translated_text = ''
