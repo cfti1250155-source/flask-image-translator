@@ -1,144 +1,62 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ ui.title }}</title>
+    <title>Select Target Language</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="max-w-2xl w-full bg-slate-800 rounded-2xl shadow-xl border border-slate-700 p-6 md:p-8">
+    <div class="max-w-md w-full bg-slate-800 rounded-2xl shadow-xl border border-slate-700 p-6 md:p-8 text-center">
         
-        <!-- ヘッダー & 言語変更ボタン -->
-        <div class="flex justify-between items-center mb-6">
-            <span class="bg-indigo-900/60 text-indigo-300 text-xs font-semibold px-3 py-1 rounded-full border border-indigo-700">
-                Target: {{ target_lang }}
-            </span>
-            <a href="/select-language" class="text-xs text-slate-400 hover:text-white underline">
-                🌐 {{ ui.change_lang }}
-            </a>
-        </div>
+        <h1 class="text-2xl font-bold text-white mb-2">🌐 AI Multi-Translator</h1>
+        <p class="text-slate-400 text-sm mb-6">Select your target language to start</p>
 
-        <div class="text-center space-y-2 mb-6">
-            <h1 class="text-3xl font-bold tracking-tight text-white">{{ ui.title }}</h1>
-            <p class="text-slate-400 text-sm">{{ ui.subtitle }}</p>
-        </div>
-
-        <!-- 1. テキスト直接入力フォーム -->
-        <form action="/" method="POST" class="space-y-3 mb-6">
-            <div>
-                <label class="block text-sm font-medium text-slate-300 mb-2">{{ ui.text_input_label }}</label>
-                <textarea name="direct_text" rows="3" class="w-full p-3 rounded-xl bg-slate-900 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-slate-500" placeholder="{{ ui.text_placeholder }}"></textarea>
+        <!-- リアルタイム検索バー (虫眼鏡アイコン付き) -->
+        <div class="relative mb-4">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
+                </svg>
             </div>
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-4 rounded-xl shadow-lg transition text-sm">
-                {{ ui.btn_text_translate }}
-            </button>
-        </form>
-
-        <div class="relative flex py-2 items-center mb-6">
-            <div class="flex-grow border-t border-slate-700"></div>
-            <span class="flex-shrink mx-4 text-slate-500 text-xs font-semibold">{{ ui.or }}</span>
-            <div class="flex-grow border-t border-slate-700"></div>
+            <input type="text" id="languageSearch" oninput="filterLanguages()" 
+                   placeholder="Search language (e.g. Thai, Spanish)..." 
+                   class="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-900 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-slate-500 transition">
         </div>
 
-        <!-- 2. 画像送信フォーム -->
-        <form action="/" method="POST" enctype="multipart/form-data" class="space-y-4">
-            <div class="flex flex-col items-center justify-center w-full">
-                <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-slate-600 border-dashed rounded-xl cursor-pointer bg-slate-700/50 hover:bg-slate-700 transition">
-                    <div class="flex flex-col items-center justify-center pt-4 pb-4">
-                        <p class="text-sm text-slate-300 font-medium">{{ ui.image_input_label }}</p>
-                    </div>
-                    <input type="file" name="image" accept="image/*" class="hidden" onchange="document.getElementById('file-name').innerText = this.files[0].name">
+        <!-- 言語選択フォーム -->
+        <form action="/set-language" method="POST">
+            <div id="languageList" class="max-h-60 overflow-y-auto space-y-2 mb-6 text-left pr-1">
+                {% for lang in languages %}
+                <label class="lang-item flex items-center justify-between p-3 rounded-xl bg-slate-700/50 hover:bg-slate-700 cursor-pointer border border-slate-700 transition">
+                    <span class="text-sm font-medium text-slate-200">{{ lang }}</span>
+                    <input type="radio" name="target_lang" value="{{ lang }}" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" {% if loop.first %}checked{% endif %}>
                 </label>
-                <p id="file-name" class="text-xs text-indigo-400 mt-2 h-4"></p>
+                {% endfor %}
             </div>
 
             <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg transition">
-                {{ ui.btn_image_translate }}
+                Continue to Translator
             </button>
         </form>
 
-        <!-- 結果表示部分 -->
-        {% if ocr_text or translated_text %}
-        <div class="mt-8 space-y-4 pt-6 border-t border-slate-700">
-            {% if ocr_text %}
-            <div>
-                <h2 class="text-sm font-medium text-slate-400 mb-1">{{ ui.target_text_label }}</h2>
-                <div class="p-4 bg-slate-900 rounded-xl border border-slate-700 text-slate-200 text-sm whitespace-pre-wrap">{{ ocr_text }}</div>
-            </div>
-            {% endif %}
-
-            {% if translated_text %}
-            <div>
-                <div class="flex justify-between items-center mb-1">
-                    <h2 class="text-sm font-medium text-indigo-400">{{ ui.result_label }}</h2>
-                    <!-- 便利ツールボタン群（コピー・保存・音声読み上げ） -->
-                    <div class="flex space-x-2">
-                        <button onclick="speakText()" title="音声読み上げ" class="p-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs transition">
-                            🔊 読み上げ
-                        </button>
-                        <button onclick="copyResult()" title="テキストコピー" class="p-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs transition">
-                            📋 コピー
-                        </button>
-                        <button onclick="downloadText()" title="ファイル保存" class="p-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs transition">
-                            💾 保存
-                        </button>
-                    </div>
-                </div>
-                <div id="resultText" class="p-4 bg-indigo-950/50 rounded-xl border border-indigo-800 text-indigo-100 text-base font-medium whitespace-pre-wrap">{{ translated_text }}</div>
-            </div>
-            {% endif %}
-        </div>
-        {% endif %}
-
     </div>
 
-    <!-- JavaScript ツール関数群 -->
     <script>
-        // 1. コピー機能
-        function copyResult() {
-            const text = document.getElementById('resultText').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert('翻訳結果をクリップボードにコピーしました！');
-            });
-        }
-
-        // 2. .txt ファイル保存機能
-        function downloadText() {
-            const text = document.getElementById('resultText').innerText;
-            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'translation_result.txt';
-            link.click();
-        }
-
-        // 3. 音声読み上げ機能（Text-to-Speech）
-        function speakText() {
-            const text = document.getElementById('resultText').innerText;
-            if ('speechSynthesis' in window) {
-                // 実行中の読み上げがあれば停止
-                window.speechSynthesis.cancel();
-                
-                const utterance = new SpeechSynthesisUtterance(text);
-                // セッションの言語に合わせて読み上げ言語を自動調整
-                const targetLang = "{{ target_lang }}";
-                
-                const langMap = {
-                    'Japanese': 'ja-JP',
-                    'English': 'en-US',
-                    'Spanish': 'es-ES',
-                    'French': 'fr-FR',
-                    'German': 'de-DE',
-                    'Chinese (Simplified)': 'zh-CN',
-                    'Korean': 'ko-KR'
-                };
-
-                utterance.lang = langMap[targetLang] || 'en-US';
-                window.speechSynthesis.speak(utterance);
-            } else {
-                alert('お使いのブラウザは音声読み上げに対応していません。');
+        function filterLanguages() {
+            const input = document.getElementById('languageSearch').value.toLowerCase().trim();
+            const items = document.getElementsByClassName('lang-item');
+            
+            for (let i = 0; i < items.length; i++) {
+                const text = items[i].innerText.toLowerCase();
+                if (text.includes(input)) {
+                    items[i].classList.remove('hidden');
+                    items[i].classList.add('flex');
+                } else {
+                    items[i].classList.remove('flex');
+                    items[i].classList.add('hidden');
+                }
             }
         }
     </script>
