@@ -71,8 +71,22 @@
 
             {% if translated_text %}
             <div>
-                <h2 class="text-sm font-medium text-indigo-400 mb-1">{{ ui.result_label }}</h2>
-                <div class="p-4 bg-indigo-950/50 rounded-xl border border-indigo-800 text-indigo-100 text-base font-medium whitespace-pre-wrap">{{ translated_text }}</div>
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-sm font-medium text-indigo-400">{{ ui.result_label }}</h2>
+                    <!-- 便利ツールボタン群（音声読み上げ・コピー・保存） -->
+                    <div class="flex space-x-2">
+                        <button type="button" onclick="speakText()" title="音声読み上げ" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                            🔊 読み上げ
+                        </button>
+                        <button type="button" onclick="copyResult()" title="テキストコピー" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                            📋 コピー
+                        </button>
+                        <button type="button" onclick="downloadText()" title="ファイル保存" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                            💾 保存
+                        </button>
+                    </div>
+                </div>
+                <div id="resultText" class="p-4 bg-indigo-950/50 rounded-xl border border-indigo-800 text-indigo-100 text-base font-medium whitespace-pre-wrap">{{ translated_text }}</div>
             </div>
             {% endif %}
         </div>
@@ -80,5 +94,58 @@
 
     </div>
 
+    <!-- JavaScript ツール関数群 -->
+    <script>
+        // 1. コピー機能
+        function copyResult() {
+            const text = document.getElementById('resultText').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('翻訳結果をクリップボードにコピーしました！');
+            }).catch(err => {
+                console.error('コピー失敗:', err);
+            });
+        }
+
+        // 2. .txt ファイル保存機能
+        function downloadText() {
+            const text = document.getElementById('resultText').innerText;
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'translation_result.txt';
+            link.click();
+        }
+
+        // 3. 音声読み上げ機能（Text-to-Speech）
+        function speakText() {
+            const text = document.getElementById('resultText').innerText;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                const targetLang = "{{ target_lang }}";
+                
+                const langMap = {
+                    'Japanese': 'ja-JP',
+                    'English': 'en-US',
+                    'Spanish': 'es-ES',
+                    'French': 'fr-FR',
+                    'German': 'de-DE',
+                    'Chinese (Simplified)': 'zh-CN',
+                    'Chinese (Traditional)': 'zh-TW',
+                    'Korean': 'ko-KR',
+                    'Italian': 'it-IT',
+                    'Russian': 'ru-RU',
+                    'Portuguese': 'pt-PT',
+                    'Thai': 'th-TH',
+                    'Vietnamese': 'vi-VN'
+                };
+
+                utterance.lang = langMap[targetLang] || 'ja-JP';
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert('お使いのブラウザは音声読み上げに対応していません。');
+            }
+        }
+    </script>
 </body>
 </html>
