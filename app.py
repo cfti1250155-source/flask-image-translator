@@ -12,22 +12,20 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "app-secret-key-12345")
 api_key = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key) if api_key else None
 
-# サポートする言語リスト（日本語＋英語表記）
+# サポートする言語リスト（全33言語・英語表記のみ）
 SUPPORTED_LANGUAGES = [
-    "日本語 (Japanese)", "英語 (English)", "スペイン語 (Spanish)", "フランス語 (French)", 
-    "ドイツ語 (German)", "中国語・簡体字 (Chinese Simplified)", "中国語・繁体字 (Chinese Traditional)", 
-    "韓国語 (Korean)", "イタリア語 (Italian)", "ロシア語 (Russian)", "ポルトガル語 (Portuguese)", 
-    "タイ語 (Thai)", "ベトナム語 (Vietnamese)", "インドネシア語 (Indonesian)", "トルコ語 (Turkish)", 
-    "アラビア語 (Arabic)", "ヒンディー語 (Hindi)", "オランダ語 (Dutch)", "ポーランド語 (Polish)", 
-    "スウェーデン語 (Swedish)", "ギリシャ語 (Greek)", "チェコ語 (Czech)", "ハンガリー語 (Hungarian)", 
-    "ルーマニア語 (Romanian)", "ウクライナ語 (Ukrainian)", "ヘブライ語 (Hebrew)", "マレー語 (Malay)", 
-    "ペルシア語 (Persian)", "タガログ語 (Tagalog)", "スワヒリ語 (Swahili)", "デンマーク語 (Danish)", 
-    "フィンランド語 (Finnish)", "ノルウェー語 (Norwegian)"
+    "Japanese", "English", "Spanish", "French", "German", 
+    "Chinese (Simplified)", "Chinese (Traditional)", "Korean", "Italian", "Russian", 
+    "Portuguese", "Thai", "Vietnamese", "Indonesian", "Turkish", 
+    "Arabic", "Hindi", "Dutch", "Polish", "Swedish", 
+    "Greek", "Czech", "Hungarian", "Romanian", "Ukrainian", 
+    "Hebrew", "Malay", "Persian", "Tagalog", "Swahili", 
+    "Danish", "Finnish", "Norwegian"
 ]
 
 # 各言語のUI表示テキスト
 UI_LABELS = {
-    "日本語": {
+    "Japanese": {
         "title": "📷 AI万能翻訳アプリ",
         "subtitle": "テキスト入力または画像アップロードで自動翻訳します。",
         "text_input_label": "テキストを直接入力して翻訳",
@@ -40,7 +38,7 @@ UI_LABELS = {
         "result_label": "翻訳・AI校正結果",
         "change_lang": "言語変更"
     },
-    "英語": {
+    "English": {
         "title": "📷 AI Multi-Translator",
         "subtitle": "Translate via direct text input or image upload.",
         "text_input_label": "Direct Text Translation",
@@ -55,7 +53,7 @@ UI_LABELS = {
     }
 }
 
-DEFAULT_UI = UI_LABELS["日本語"]
+DEFAULT_UI = UI_LABELS["Japanese"]
 
 @app.route('/select-language')
 def select_language():
@@ -63,11 +61,8 @@ def select_language():
 
 @app.route('/set-language', methods=['POST'])
 def set_language():
-    selected = request.form.get('target_lang', '日本語 (Japanese)')
-    # 表示用の言語名（「 (Japanese)」などを除去した部分）を取り出す
-    clean_lang = selected.split(' (')[0]
-    session['target_lang'] = clean_lang
-    session['full_target_lang'] = selected
+    target_lang = request.form.get('target_lang', 'Japanese')
+    session['target_lang'] = target_lang
     return redirect(url_for('index'))
 
 @app.route('/', methods=['GET', 'POST'])
@@ -75,7 +70,7 @@ def index():
     if 'target_lang' not in session:
         return redirect(url_for('select_language'))
 
-    target_lang = session.get('target_lang', '日本語')
+    target_lang = session.get('target_lang', 'Japanese')
     ui = UI_LABELS.get(target_lang, DEFAULT_UI)
 
     ocr_text = ''
@@ -98,16 +93,16 @@ def index():
             if client:
                 try:
                     prompt = f"""
-以下の文章の「元の言語」を判定し、自然で読みやすい【{target_lang}】に翻訳・校正してください。
-余計な解説は含めず、必ず以下の形式のみで出力してください：
+Identify the original language of the text below, and translate it naturally into 【{target_lang}】.
+Do not include extra explanations. Output strictly in this format:
 
-【判定言語】
-（ここに判定した元の言語名を出力）
+【Detected Language】
+(Name of the original language)
 
-【翻訳・校正結果】
-（ここに【{target_lang}】への翻訳後の文章のみを出力）
+【Translation Result】
+(Translated text in {target_lang})
 
-対象文章：
+Text:
 {ocr_text}
 """
                     response = client.models.generate_content(
