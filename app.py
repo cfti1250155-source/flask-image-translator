@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import time
 from flask import Flask, render_template, request, redirect, url_for, session
 from google import genai
 import pytesseract
@@ -56,6 +57,23 @@ UI_CACHE = {
     }
 }
 
+def generate_content_with_retry(prompt, retries=3, delay=1):
+    """Gemini APIの一時的混雑（503エラー等）に対応する自動リトライ処理"""
+    if not client:
+        return None
+    for attempt in range(retries):
+        try:
+            response = client.models.generate_content(
+                model='gemini-3.8-flash',
+                contents=prompt
+            )
+            return response
+        except Exception as e:
+            if attempt < retries - 1:
+                time.sleep(delay)
+            else:
+                raise e
+
 def get_ui_labels(target_lang):
     """選択言語のUI文言を取得"""
     if target_lang in UI_CACHE:
@@ -81,18 +99,16 @@ Return ONLY valid JSON matching this exact structure:
   "swap_btn": "⇄ Reverse"
 }}
 """
-            response = client.models.generate_content(
-                model='gemini-3.8-flash',
-                contents=prompt
-            )
-            text_resp = response.text.strip()
-            if "```" in text_resp:
-                text_resp = text_resp.split("```")[1]
-                if text_resp.startswith("json"):
-                    text_resp = text_resp[4:].strip()
-            labels = json.loads(text_resp)
-            UI_CACHE[target_lang] = labels
-            return labels
+            response = generate_content_with_retry(prompt)
+            if response:
+                text_resp = response.text.strip()
+                if "```" in text_resp:
+                    text_resp = text_resp.split("```")[1]
+                    if text_resp.startswith("json"):
+                        text_resp = text_resp[4:].strip()
+                labels = json.loads(text_resp)
+                UI_CACHE[target_lang] = labels
+                return labels
         except Exception:
             pass
 
@@ -115,13 +131,11 @@ def swap_language():
     last_result = session.get('last_translation_result')
     current_target = session.get('target_lang', 'English')
 
-    # 検出言語が存在していれば Target に設定
     if last_detected and last_detected in SUPPORTED_LANGUAGES:
         session['target_lang'] = last_detected
     else:
         session['target_lang'] = "Japanese" if current_target != "Japanese" else "English"
 
-    # 直前の翻訳結果を入力欄へセット
     if last_result:
         session['input_preset'] = last_result
 
@@ -167,22 +181,18 @@ Do not include extra explanations. Output strictly in this format:
 Text:
 {ocr_text}
 """
-                    response = client.models.generate_content(
-                        model='gemini-3.8-flash',
-                        contents=prompt,
-                    )
-                    translated_text = response.text
+                    response = generate_content_with_retry(prompt)
+                    if response:
+                        translated_text = response.text
 
-                    # 検出言語と翻訳テキストの抽出・セッション記憶
-                    if "【Detected Language】" in translated_text and "【Translation Result】" in translated_text:
-                        parts = translated_text.split("【Translation Result】")
-                        detected = parts[0].replace("【Detected Language】", "").strip()
-                        result_only = parts[1].strip()
-                        session['last_detected_lang'] = detected
-                        session['last_translation_result'] = result_only
-
+                        if "【Detected Language】" in translated_text and "【Translation Result】" in translated_text:
+                            parts = translated_text.split("【Translation Result】")
+                            detected = parts[0].replace("【Detected Language】", "").strip()
+                            result_only = parts[1].strip()
+                            session['last_detected_lang'] = detected
+                            session['last_translation_result'] = result_only
                 except Exception as e:
-                    translated_text = f"AI翻訳エラー: {e}"
+                    translated_text = f"AI翻訳エラー: サーバー混雑のため時間を置いて再試行してください ({e})"
             else:
                 translated_text = "GEMINI_API_KEY が設定されていません。"
 
