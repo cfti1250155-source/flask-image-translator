@@ -10,13 +10,13 @@
 
     <div class="max-w-2xl w-full bg-slate-800 rounded-2xl shadow-xl border border-slate-700 p-6 md:p-8">
         
-        <!-- ヘッダー & 言語変更ボタン -->
+        <!-- ヘッダー & 言語変更・切り替えボタン -->
         <div class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-2">
                 <span class="bg-indigo-900/60 text-indigo-300 text-xs font-semibold px-3 py-1 rounded-full border border-indigo-700">
                     Target: {{ target_lang }}
                 </span>
-                {% if session.get('last_detected_lang') %}
+                {% if session.get('last_detected_lang') or session.get('last_translation_result') %}
                 <form action="/swap-language" method="POST" class="inline">
                     <button type="submit" title="言語切り替え" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium px-2.5 py-1 rounded-full border border-slate-600 transition flex items-center gap-1">
                         ⇄ {{ ui.get('swap_btn', '言語切り替え') }}
@@ -81,11 +81,17 @@
             {% if translated_text %}
             <div>
                 <div class="flex justify-between items-center mb-2">
-                    <h2 class="text-sm font-medium text-indigo-400">{{ ui.result_label }}</h2>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-sm font-medium text-indigo-400">{{ ui.result_label }}</h2>
+                        {% if detected_lang %}
+                        <span class="bg-slate-700/80 text-emerald-400 text-xs px-2.5 py-0.5 rounded-full border border-slate-600 font-medium">
+                            🌐 {{ ui.get('detected_label', '検出言語') }}: {{ detected_lang }}
+                        </span>
+                        {% endif %}
+                    </div>
                     <!-- 便利ツールボタン群 -->
                     <div class="flex space-x-2">
-                        <!-- テキスト入力翻訳の時のみ「言語切り替え」ボタンを表示 -->
-                        {% if is_text_translation %}
+                        {% if is_text_translation or session.get('last_translation_result') %}
                         <form action="/swap-language" method="POST" class="inline">
                             <button type="submit" title="言語切り替え" class="px-2.5 py-1 bg-indigo-800 hover:bg-indigo-700 text-indigo-200 rounded-lg text-xs font-medium transition flex items-center gap-1 border border-indigo-600">
                                 ⇄ {{ ui.get('swap_btn', '言語切り替え') }}
