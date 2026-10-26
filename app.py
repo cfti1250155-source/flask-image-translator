@@ -57,10 +57,11 @@ UI_CACHE = {
     }
 }
 
-def generate_content_with_retry(prompt, retries=3, delay=1):
-    """Gemini APIの一時的混雑（503エラー等）に対応する自動リトライ処理"""
+def generate_content_with_retry(prompt, retries=3, initial_delay=2):
+    """Gemini APIの一時的混雑（503エラー）に対応する自動リトライ（指数バックオフ）"""
     if not client:
         return None
+    delay = initial_delay
     for attempt in range(retries):
         try:
             response = client.models.generate_content(
@@ -69,10 +70,12 @@ def generate_content_with_retry(prompt, retries=3, delay=1):
             )
             return response
         except Exception as e:
-            if attempt < retries - 1:
-                time.sleep(delay)
-            else:
-                raise e
+            if "503" in str(e) or "UNAVAILABLE" in str(e):
+                if attempt < retries - 1:
+                    time.sleep(delay)
+                    delay *= 2
+                    continue
+            raise e
 
 def get_ui_labels(target_lang):
     """選択言語のUI文言を取得"""
@@ -192,7 +195,7 @@ Text:
                             session['last_detected_lang'] = detected
                             session['last_translation_result'] = result_only
                 except Exception as e:
-                    translated_text = f"AI翻訳エラー: サーバー混雑のため時間を置いて再試行してください ({e})"
+                    translated_text = f"AI翻訳エラー: Google APIが混雑しています。数秒後に再度「翻訳する」を押してください ({e})"
             else:
                 translated_text = "GEMINI_API_KEY が設定されていません。"
 
