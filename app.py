@@ -37,7 +37,8 @@ UI_CACHE = {
         "btn_image_translate": "画像を翻訳する",
         "target_text_label": "対象テキスト",
         "result_label": "翻訳・AI校正結果",
-        "change_lang": "言語変更"
+        "change_lang": "言語変更",
+        "swap_btn": "⇄ 逆翻訳"
     },
     "English": {
         "title": "📷 AI Multi-Translator",
@@ -50,46 +51,8 @@ UI_CACHE = {
         "btn_image_translate": "Translate Image",
         "target_text_label": "Source Text",
         "result_label": "Translation & AI Result",
-        "change_lang": "Change Language"
-    },
-    "Spanish": {
-        "title": "📷 Traductor Universal IA",
-        "subtitle": "Traduzca mediante entrada de texto directa o carga de imágenes.",
-        "text_input_label": "Ingrese texto directamente para traducir",
-        "text_placeholder": "Ingrese el texto a traducir...",
-        "btn_text_translate": "Traducir texto",
-        "or": "o",
-        "image_input_label": "Haga clic para seleccionar imagen",
-        "btn_image_translate": "Traducir imagen",
-        "target_text_label": "Texto de origen",
-        "result_label": "Resultado de traducción e IA",
-        "change_lang": "Cambiar idioma"
-    },
-    "French": {
-        "title": "📷 Traducteur Universel IA",
-        "subtitle": "Traduisez par saisie directe de texte ou téléchargement d'image.",
-        "text_input_label": "Saisir du texte directement pour traduire",
-        "text_placeholder": "Entrez le texte à traduire...",
-        "btn_text_translate": "Traduire le texte",
-        "or": "ou",
-        "image_input_label": "Cliquez pour sélectionner une image",
-        "btn_image_translate": "Traduire l'image",
-        "target_text_label": "Texte source",
-        "result_label": "Résultat de la traduction IA",
-        "change_lang": "Changer de langue"
-    },
-    "German": {
-        "title": "📷 KI-Multisprach-Übersetzer",
-        "subtitle": "Übersetzen Sie per Texteingabe oder Bild-Upload.",
-        "text_input_label": "Text direkt eingeben und übersetzen",
-        "text_placeholder": "Geben Sie den Text ein...",
-        "btn_text_translate": "Text übersetzen",
-        "or": "oder",
-        "image_input_label": "Klicken Sie, um ein Bild auszuwählen",
-        "btn_image_translate": "Bild übersetzen",
-        "target_text_label": "Quelltext",
-        "result_label": "Übersetzungsergebnis",
-        "change_lang": "Sprache wechseln"
+        "change_lang": "Change Language",
+        "swap_btn": "⇄ Reverse"
     }
 }
 
@@ -114,7 +77,8 @@ Return ONLY valid JSON matching this exact structure:
   "btn_image_translate": "Translate Image",
   "target_text_label": "Source Text",
   "result_label": "Translation & AI Result",
-  "change_lang": "Change Language"
+  "change_lang": "Change Language",
+  "swap_btn": "⇄ Reverse"
 }}
 """
             response = client.models.generate_content(
@@ -144,6 +108,25 @@ def set_language():
     session['target_lang'] = target_lang
     return redirect(url_for('index'))
 
+@app.route('/swap-language', methods=['POST'])
+def swap_language():
+    """言語の双方向入れ替え（検出言語 ⇄ Target）"""
+    last_detected = session.get('last_detected_lang')
+    last_result = session.get('last_translation_result')
+    current_target = session.get('target_lang', 'English')
+
+    # 検出言語が存在していれば Target に設定
+    if last_detected and last_detected in SUPPORTED_LANGUAGES:
+        session['target_lang'] = last_detected
+    else:
+        session['target_lang'] = "Japanese" if current_target != "Japanese" else "English"
+
+    # 直前の翻訳結果を入力欄へセット
+    if last_result:
+        session['input_preset'] = last_result
+
+    return redirect(url_for('index'))
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if 'target_lang' not in session:
@@ -152,7 +135,7 @@ def index():
     target_lang = session.get('target_lang', 'English')
     ui = get_ui_labels(target_lang)
 
-    ocr_text = ''
+    ocr_text = session.pop('input_preset', '')
     translated_text = ''
 
     if request.method == 'POST':
@@ -176,7 +159,7 @@ Identify the original language of the text below, and translate it naturally int
 Do not include extra explanations. Output strictly in this format:
 
 【Detected Language】
-(Name of the original language)
+(Name of the original language from this list if possible: {', '.join(SUPPORTED_LANGUAGES)})
 
 【Translation Result】
 (Translated text in {target_lang})
@@ -189,6 +172,15 @@ Text:
                         contents=prompt,
                     )
                     translated_text = response.text
+
+                    # 検出言語と翻訳テキストの抽出・セッション記憶
+                    if "【Detected Language】" in translated_text and "【Translation Result】" in translated_text:
+                        parts = translated_text.split("【Translation Result】")
+                        detected = parts[0].replace("【Detected Language】", "").strip()
+                        result_only = parts[1].strip()
+                        session['last_detected_lang'] = detected
+                        session['last_translation_result'] = result_only
+
                 except Exception as e:
                     translated_text = f"AI翻訳エラー: {e}"
             else:
