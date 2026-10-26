@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import time
 from flask import Flask, render_template, request, redirect, url_for, session
 from google import genai
 import pytesseract
@@ -38,7 +39,8 @@ UI_CACHE = {
         "target_text_label": "対象テキスト",
         "result_label": "翻訳・AI校正結果",
         "change_lang": "言語変更",
-        "swap_btn": "言語切り替え"
+        "swap_btn": "言語切り替え",
+        "detected_label": "検出言語"
     },
     "English": {
         "title": "📷 AI Multi-Translator",
@@ -52,51 +54,30 @@ UI_CACHE = {
         "target_text_label": "Source Text",
         "result_label": "Translation & AI Result",
         "change_lang": "Change Language",
-        "swap_btn": "Swap Language"
-    },
-    "Spanish": {
-        "title": "📷 Traductor Universal IA",
-        "subtitle": "Traduzca mediante entrada de texto directa o carga de imágenes.",
-        "text_input_label": "Ingrese texto directamente para traducir",
-        "text_placeholder": "Ingrese el texto a traducir...",
-        "btn_text_translate": "Traducir texto",
-        "or": "o",
-        "image_input_label": "Haga clic para seleccionar imagen",
-        "btn_image_translate": "Traducir imagen",
-        "target_text_label": "Texto de origen",
-        "result_label": "Resultado de traducción e IA",
-        "change_lang": "Cambiar idioma",
-        "swap_btn": "Cambiar idioma"
-    },
-    "French": {
-        "title": "📷 Traducteur Universel IA",
-        "subtitle": "Traduisez par saisie directe de texte ou téléchargement d'image.",
-        "text_input_label": "Saisir du texte directement pour traduire",
-        "text_placeholder": "Entrez le texte à traduire...",
-        "btn_text_translate": "Traduire le texte",
-        "or": "ou",
-        "image_input_label": "Cliquez pour sélectionner une image",
-        "btn_image_translate": "Traduire l'image",
-        "target_text_label": "Texte source",
-        "result_label": "Résultat de la traduction IA",
-        "change_lang": "Changer de langue",
-        "swap_btn": "Changer de langue"
-    },
-    "German": {
-        "title": "📷 KI-Multisprach-Übersetzer",
-        "subtitle": "Übersetzen Sie per Texteingabe oder Bild-Upload.",
-        "text_input_label": "Text direkt eingeben und übersetzen",
-        "text_placeholder": "Geben Sie den Text ein...",
-        "btn_text_translate": "Text übersetzen",
-        "or": "oder",
-        "image_input_label": "Klicken Sie, um ein Bild auszuwählen",
-        "btn_image_translate": "Bild übersetzen",
-        "target_text_label": "Quelltext",
-        "result_label": "Übersetzungsergebnis",
-        "change_lang": "Sprache wechseln",
-        "swap_btn": "Sprache wechseln"
+        "swap_btn": "Swap Language",
+        "detected_label": "Detected Language"
     }
 }
+
+def generate_content_with_retry(prompt, retries=3, initial_delay=2):
+    """Gemini APIの一時的混雑（503エラー）に対応する自動リトライ"""
+    if not client:
+        return None
+    delay = initial_delay
+    for attempt in range(retries):
+        try:
+            response = client.models.generate_content(
+                model='gemini-3.8-flash',
+                contents=prompt
+            )
+            return response
+        except Exception as e:
+            if "503" in str(e) or "UNAVAILABLE" in str(e):
+                if attempt < retries - 1:
+                    time.sleep(delay)
+                    delay *= 2
+                    continue
+            raise e
 
 def get_ui_labels(target_lang):
     """選択言語のUI文言を取得"""
@@ -114,7 +95,7 @@ def set_language():
 
 @app.route('/swap-language', methods=['POST'])
 def swap_language():
-    """テキスト入力のみの言語入れ替え（検出言語 ⇄ Target）"""
+    """テキスト入力の言語切り替え（検出言語 ⇄ Target）"""
     last_detected = session.get('last_detected_lang')
     last_result = session.get('last_translation_result')
     current_target = session.get('target_lang', 'English')
@@ -139,17 +120,18 @@ def index():
 
     ocr_text = session.pop('input_preset', '')
     translated_text = ''
+    detected_lang = ''
     is_text_translation = False
 
     if request.method == 'POST':
         direct_text = request.form.get('direct_text')
         file = request.files.get('image')
 
-        # 1. テキスト直接入力の場合
+        # 1. テキスト直接入力
         if direct_text and direct_text.strip() != '':
             ocr_text = direct_text.strip()
             is_text_translation = True
-        # 2. 画像ファイルの場合（画像翻訳は入れ替えデータの保存を行わない）
+        # 2. 画像ファイル
         elif file and file.filename != '':
             session.pop('last_detected_lang', None)
             session.pop('last_translation_result', None)
@@ -175,19 +157,19 @@ Do not include extra explanations. Output strictly in this format:
 Text:
 {ocr_text}
 """
-                    response = client.models.generate_content(
-                        model='gemini-3.8-flash',
-                        contents=prompt,
-                    )
-                    translated_text = response.text
+                    response = generate_content_with_retry(prompt)
+                    if response:
+                        raw_resp = response.text
+                        if "【Detected Language】" in raw_resp and "【Translation Result】" in raw_resp:
+                            parts = raw_resp.split("【Translation Result】")
+                            detected_lang = parts[0].replace("【Detected Language】", "").strip()
+                            translated_text = parts[1].strip()
+                        else:
+                            translated_text = raw_resp
 
-                    # テキスト入力翻訳の時のみ切り替え用にセッション保存
-                    if is_text_translation and "【Detected Language】" in translated_text and "【Translation Result】" in translated_text:
-                        parts = translated_text.split("【Translation Result】")
-                        detected = parts[0].replace("【Detected Language】", "").strip()
-                        result_only = parts[1].strip()
-                        session['last_detected_lang'] = detected
-                        session['last_translation_result'] = result_only
+                        if is_text_translation and detected_lang:
+                            session['last_detected_lang'] = detected_lang
+                            session['last_translation_result'] = translated_text
 
                 except Exception as e:
                     err_msg = str(e)
@@ -201,6 +183,7 @@ Text:
     return render_template('index.html', 
                            ocr_text=ocr_text, 
                            translated_text=translated_text,
+                           detected_lang=detected_lang,
                            target_lang=target_lang,
                            ui=ui,
                            is_text_translation=is_text_translation)
