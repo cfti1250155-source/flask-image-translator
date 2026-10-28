@@ -2,6 +2,7 @@ import io
 import json
 import os
 import time
+import base64
 from flask import Flask, render_template, request, redirect, url_for, session
 from google import genai
 import pytesseract
@@ -25,18 +26,15 @@ SUPPORTED_LANGUAGES = [
     "Danish", "Finnish", "Norwegian"
 ]
 
-# 各言語のUI表示テキスト（標準辞書）
+# UI辞書
 UI_CACHE = {
     "Japanese": {
         "title": "📷 AI万能翻訳アプリ",
-        "subtitle": "テキスト入力または画像アップロードで自動翻訳します。",
-        "text_input_label": "テキストを直接入力して翻訳",
+        "subtitle": "テキスト・画像・音声・カメラから高精度翻訳",
         "text_placeholder": "翻訳したい文章を入力...",
         "btn_text_translate": "テキストを翻訳する",
-        "or": "または",
         "image_input_label": "クリックして画像を選択",
         "btn_image_translate": "画像を翻訳する",
-        "target_text_label": "対象テキスト",
         "result_label": "翻訳・AI校正結果",
         "change_lang": "言語変更",
         "swap_btn": "言語切り替え",
@@ -44,14 +42,11 @@ UI_CACHE = {
     },
     "English": {
         "title": "📷 AI Multi-Translator",
-        "subtitle": "Translate via direct text input or image upload.",
-        "text_input_label": "Direct Text Translation",
+        "subtitle": "Translate text, image, voice, and camera",
         "text_placeholder": "Enter text to translate...",
         "btn_text_translate": "Translate Text",
-        "or": "OR",
         "image_input_label": "Click to select image",
         "btn_image_translate": "Translate Image",
-        "target_text_label": "Source Text",
         "result_label": "Translation & AI Result",
         "change_lang": "Change Language",
         "swap_btn": "Swap Language",
@@ -60,7 +55,7 @@ UI_CACHE = {
 }
 
 def generate_content_with_retry(prompt, retries=3, initial_delay=2):
-    """Gemini APIの一時的混雑（503エラー）に対応する自動リトライ"""
+    """Gemini APIの一時的混雑に対応する自動リトライ"""
     if not client:
         return None
     delay = initial_delay
@@ -80,7 +75,6 @@ def generate_content_with_retry(prompt, retries=3, initial_delay=2):
             raise e
 
 def get_ui_labels(target_lang):
-    """選択言語のUI文言を取得"""
     return UI_CACHE.get(target_lang, UI_CACHE["English"])
 
 @app.route('/select-language')
@@ -95,7 +89,7 @@ def set_language():
 
 @app.route('/swap-language', methods=['POST'])
 def swap_language():
-    """ターゲット言語のスムーズな切り替え"""
+    """テキスト翻訳の言語双方向切り替え"""
     current_target = session.get('target_lang', 'English')
     last_detected = session.get('last_detected_lang')
 
@@ -106,8 +100,6 @@ def swap_language():
 
     session['target_lang'] = new_target
     session['last_detected_lang'] = current_target
-    session.pop('input_preset', None)
-
     return redirect(url_for('index'))
 
 @app.route('/', methods=['GET', 'POST'])
@@ -121,28 +113,41 @@ def index():
     ocr_text = ''
     translated_text = ''
     detected_lang = ''
-    is_text_translation = True
+    active_mode = 'text'
 
     if request.method == 'POST':
         mode = request.form.get('mode', 'text')
-        direct_text = request.form.get('direct_text')
-        file = request.files.get('image')
+        active_mode = mode
 
-        # 1. テキスト入力モード
-        if mode == 'text' and direct_text and direct_text.strip() != '':
-            ocr_text = direct_text.strip()
-            is_text_translation = True
-        # 2. 画像モード
-        elif mode == 'image' and file and file.filename != '':
-            is_text_translation = False
-            session.pop('last_detected_lang', None)
-            try:
-                image = Image.open(file.stream)
-                ocr_text = pytesseract.image_to_string(image, lang='eng+jpn')
-            except Exception as e:
-                ocr_text = f"文字認識エラー: {e}"
+        raw_input_text = ""
 
-        if ocr_text and not ocr_text.startswith("文字認識エラー"):
+        # モードごとの入力処理
+        if mode == 'text':
+            raw_input_text = request.form.get('direct_text', '').strip()
+        elif mode == 'voice':
+            raw_input_text = request.form.get('voice_text', '').strip()
+        elif mode == 'image':
+            file = request.files.get('image')
+            if file and file.filename != '':
+                try:
+                    image = Image.open(file.stream)
+                    raw_input_text = pytesseract.image_to_string(image, lang='eng+jpn').strip()
+                except Exception as e:
+                    raw_input_text = f"文字認識エラー: {e}"
+        elif mode == 'camera':
+            camera_data = request.form.get('camera_data')
+            if camera_data and ',' in camera_data:
+                try:
+                    img_bytes = base64.b64decode(camera_data.split(',')[1])
+                    image = Image.open(io.BytesIO(img_bytes))
+                    raw_input_text = pytesseract.image_to_string(image, lang='eng+jpn').strip()
+                except Exception as e:
+                    raw_input_text = f"カメラ画像解析エラー: {e}"
+
+        ocr_text = raw_input_text
+
+        # Gemini APIによる言語検出と翻訳
+        if ocr_text and not ocr_text.startswith("文字認識エラー") and not ocr_text.startswith("カメラ画像解析エラー"):
             if client:
                 try:
                     prompt = f"""
@@ -168,7 +173,7 @@ Text:
                         else:
                             translated_text = raw_resp
 
-                        if is_text_translation and detected_lang:
+                        if mode == 'text' and detected_lang:
                             session['last_detected_lang'] = detected_lang
 
                 except Exception as e:
@@ -186,7 +191,7 @@ Text:
                            detected_lang=detected_lang,
                            target_lang=target_lang,
                            ui=ui,
-                           is_text_translation=is_text_translation)
+                           active_mode=active_mode)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

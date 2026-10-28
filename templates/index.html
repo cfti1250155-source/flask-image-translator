@@ -25,27 +25,22 @@
         <!-- 中央：各モードのコンテンツエリア -->
         <div class="flex-grow flex flex-col justify-center">
 
-            <!-- 【テキスト翻訳モード】 -->
+            <!-- 1. 【テキスト翻訳モード】 (From ⇄ To 自由選択) -->
             <div id="tab-text" class="tab-content space-y-3">
-                
-                <!-- iTranslate風 言語切り替え・選択バー（テキスト入力の直上に配置） -->
                 <div class="flex items-center justify-between gap-2 bg-slate-950/60 p-2 rounded-2xl border border-slate-800/80 shadow-inner">
-                    <!-- 左：検出言語表示 -->
                     <div class="flex-1 bg-slate-900/80 rounded-xl py-2 px-3 text-center border border-slate-800">
                         <span class="text-[10px] text-slate-400 block font-medium">From</span>
                         <span class="text-xs md:text-sm font-semibold text-slate-200">
-                            {% if detected_lang %}{{ detected_lang }}{% else %}自動検出{% endif %}
+                            {% if detected_lang and active_mode == 'text' %}{{ detected_lang }}{% else %}自動検出{% endif %}
                         </span>
                     </div>
 
-                    <!-- 中央：⇄ 切り替えボタン -->
                     <form action="/swap-language" method="POST" class="inline">
                         <button type="submit" title="言語切り替え" class="w-9 h-9 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white rounded-xl flex items-center justify-center transition border border-indigo-400/30 shadow-md">
                             <i class="fa-solid fa-arrows-rotate text-xs"></i>
                         </button>
                     </form>
 
-                    <!-- 右：翻訳先言語（タップで検索バー付きの言語選択画面へ飛ぶ） -->
                     <a href="/select-language" title="翻訳先言語を選択" class="flex-1 bg-indigo-950/80 hover:bg-indigo-900/80 rounded-xl py-2 px-3 text-center border border-indigo-700/60 transition group">
                         <span class="text-[10px] text-indigo-400 block font-medium group-hover:text-indigo-300">To</span>
                         <span class="text-xs md:text-sm font-bold text-indigo-200 group-hover:text-white flex items-center justify-center gap-1">
@@ -54,129 +49,130 @@
                     </a>
                 </div>
 
-                <!-- テキスト入力フォーム -->
                 <form action="/" method="POST" class="space-y-3">
                     <input type="hidden" name="mode" value="text">
-                    <div class="relative">
-                        <textarea name="direct_text" rows="5" class="w-full p-4 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 text-base placeholder-slate-600 resize-none shadow-inner" placeholder="{{ ui.text_placeholder }}"></textarea>
-                    </div>
+                    <textarea name="direct_text" rows="4" class="w-full p-4 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 text-base placeholder-slate-600 resize-none shadow-inner" placeholder="{{ ui.text_placeholder }}"></textarea>
                     <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold py-3 px-4 rounded-2xl shadow-lg transition active:scale-[0.99] flex items-center justify-center gap-2">
                         <i class="fa-solid fa-paper-plane"></i> {{ ui.btn_text_translate }}
                     </button>
                 </form>
-
-                <!-- テキスト翻訳の結果出力枠 -->
-                {% if translated_text and is_text_translation %}
-                <div class="mt-4 p-5 bg-indigo-950/40 rounded-2xl border border-indigo-800/60 space-y-3">
-                    <div class="flex justify-between items-center border-b border-indigo-900/50 pb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">{{ ui.result_label }}</span>
-                            {% if detected_lang %}
-                            <span class="bg-emerald-950/80 text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-800">
-                                🌐 {{ detected_lang }}
-                            </span>
-                            {% endif %}
-                        </div>
-                        <div class="flex space-x-1">
-                            <button type="button" onclick="speakText()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
-                                <i class="fa-solid fa-volume-high"></i>
-                            </button>
-                            <button type="button" onclick="copyResult()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
-                                <i class="fa-solid fa-copy"></i>
-                            </button>
-                            <button type="button" onclick="downloadText()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
-                                <i class="fa-solid fa-download"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="resultText" class="text-indigo-100 text-base font-medium whitespace-pre-wrap leading-relaxed">{{ translated_text }}</div>
-                </div>
-                {% endif %}
             </div>
 
-            <!-- 【画像翻訳モード】 -->
+            <!-- 2. 【画像翻訳モード】 (画像読み込み ➔ 何語か ＋ 原文 ＋ 翻訳結果) -->
             <div id="tab-image" class="tab-content hidden space-y-4">
                 <form action="/" method="POST" enctype="multipart/form-data" class="space-y-4">
                     <input type="hidden" name="mode" value="image">
                     <div class="flex flex-col items-center justify-center w-full">
-                        <label class="flex flex-col items-center justify-center w-full h-44 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/40 hover:bg-slate-800/40 transition">
+                        <label class="flex flex-col items-center justify-center w-full h-40 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/40 hover:bg-slate-800/40 transition">
                             <div class="flex flex-col items-center justify-center p-4 text-center">
                                 <i class="fa-solid fa-image text-3xl text-indigo-400 mb-2"></i>
                                 <p class="text-sm text-slate-300 font-medium">{{ ui.image_input_label }}</p>
                                 <p class="text-xs text-slate-500 mt-1">PNG, JPG, WEBP 対応</p>
                             </div>
-                            <input type="file" name="image" accept="image/*" class="hidden" onchange="document.getElementById('file-name').innerText = this.files[0].name">
+                            <input type="file" name="image" accept="image/*" class="hidden" onchange="document.getElementById('img-file-name').innerText = this.files[0].name">
                         </label>
-                        <p id="file-name" class="text-xs text-indigo-400 mt-2 h-4 font-medium"></p>
+                        <p id="img-file-name" class="text-xs text-indigo-400 mt-2 h-4 font-medium"></p>
                     </div>
-
                     <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold py-3 px-4 rounded-2xl shadow-lg transition active:scale-[0.99] flex items-center justify-center gap-2">
                         <i class="fa-solid fa-file-invoice"></i> {{ ui.btn_image_translate }}
                     </button>
                 </form>
+            </div>
 
-                <!-- 画像翻訳の結果出力枠 -->
-                {% if translated_text and not is_text_translation %}
-                <div class="mt-6 p-5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-4">
-                    {% if ocr_text %}
-                    <div>
-                        <span class="text-xs font-bold text-slate-400 block mb-1">OCR 抽出テキスト</span>
-                        <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs text-slate-300 max-h-32 overflow-y-auto whitespace-pre-wrap">{{ ocr_text }}</div>
+            <!-- 3. 【音声翻訳モード】 (マイク音声 ➔ 何語か ＋ 認識した文字 ＋ 翻訳結果) -->
+            <div id="tab-voice" class="tab-content hidden space-y-4 text-center py-4">
+                <div class="space-y-3">
+                    <button id="start-record-btn" type="button" onclick="toggleVoiceRecording()" class="w-20 h-20 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white rounded-full flex items-center justify-center mx-auto text-3xl border-4 border-indigo-400/40 shadow-xl transition">
+                        <i id="mic-icon" class="fa-solid fa-microphone"></i>
+                    </button>
+                    <p id="voice-status" class="text-xs text-slate-400 font-medium">マイクボタンを押して喋ってください</p>
+                </div>
+
+                <form id="voice-form" action="/" method="POST" class="space-y-3 hidden">
+                    <input type="hidden" name="mode" value="voice">
+                    <textarea id="voice_text" name="voice_text" rows="3" class="w-full p-3 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800 text-sm" placeholder="聞き取った音声..."></textarea>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-2xl shadow-lg transition text-sm">
+                        音声テキストを翻訳
+                    </button>
+                </form>
+            </div>
+
+            <!-- 4. 【カメラ翻訳モード】 (リアルタイムカメラ撮影 ➔ 文字＆言語検出 ＋ 翻訳) -->
+            <div id="tab-camera" class="tab-content hidden space-y-4 text-center">
+                <div class="relative w-full rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 aspect-video flex items-center justify-center">
+                    <video id="camera-video" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+                    <canvas id="camera-canvas" class="hidden"></canvas>
+                    <div id="camera-placeholder" class="p-6 text-slate-500 text-xs">
+                        <i class="fa-solid fa-camera text-3xl text-slate-600 block mb-2"></i>
+                        「カメラを起動」を押して写真を撮影してください
                     </div>
-                    {% endif %}
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">{{ ui.result_label }}</span>
-                            <div class="flex space-x-1">
-                                <button type="button" onclick="speakText()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
-                                    <i class="fa-solid fa-volume-high"></i>
-                                </button>
-                                <button type="button" onclick="copyResult()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
-                                    <i class="fa-solid fa-copy"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="resultText" class="p-3 bg-indigo-950/50 rounded-xl border border-indigo-800/60 text-indigo-100 text-sm whitespace-pre-wrap">{{ translated_text }}</div>
+                </div>
+
+                <form id="camera-form" action="/" method="POST" class="space-y-3">
+                    <input type="hidden" name="mode" value="camera">
+                    <input type="hidden" id="camera_data" name="camera_data" value="">
+                    
+                    <div class="flex gap-2">
+                        <button type="button" onclick="startCamera()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 px-3 rounded-2xl text-xs transition border border-slate-700">
+                            📷 カメラ起動
+                        </button>
+                        <button type="button" onclick="captureCamera()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-3 rounded-2xl text-xs transition shadow-lg">
+                            ⚡ 撮影して翻訳
+                        </button>
                     </div>
+                </form>
+            </div>
+
+            <!-- 共通の翻訳結果表示エリア -->
+            {% if translated_text %}
+            <div class="mt-6 p-5 bg-indigo-950/40 rounded-2xl border border-indigo-800/60 space-y-3">
+                <div class="flex justify-between items-center border-b border-indigo-900/50 pb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">{{ ui.result_label }}</span>
+                        {% if detected_lang %}
+                        <span class="bg-emerald-950/80 text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-800">
+                            🌐 検出言語: {{ detected_lang }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="flex space-x-1">
+                        <button type="button" onclick="speakText()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                        <button type="button" onclick="copyResult()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                {% if ocr_text and active_mode != 'text' %}
+                <div class="p-3 bg-slate-950/70 rounded-xl border border-slate-800 text-xs text-slate-300 max-h-24 overflow-y-auto whitespace-pre-wrap">
+                    <span class="text-[10px] text-slate-500 font-bold block mb-0.5">検出テキスト (原文):</span>
+                    {{ ocr_text }}
                 </div>
                 {% endif %}
-            </div>
 
-            <!-- 【音声翻訳モード（準備中）】 -->
-            <div id="tab-voice" class="tab-content hidden text-center py-10 space-y-4">
-                <div class="w-20 h-20 bg-indigo-600/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto text-3xl border border-indigo-500/30">
-                    <i class="fa-solid fa-microphone"></i>
-                </div>
-                <h3 class="text-lg font-bold text-white">音声入力翻訳</h3>
-                <p class="text-xs text-slate-400 max-w-xs mx-auto">話した言葉を {{ target_lang }} に自動翻訳します。</p>
+                <div id="resultText" class="text-indigo-100 text-base font-medium whitespace-pre-wrap leading-relaxed">{{ translated_text }}</div>
             </div>
-
-            <!-- 【カメラ翻訳モード（準備中）】 -->
-            <div id="tab-camera" class="tab-content hidden text-center py-10 space-y-4">
-                <div class="w-20 h-20 bg-indigo-600/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto text-3xl border border-indigo-500/30">
-                    <i class="fa-solid fa-camera"></i>
-                </div>
-                <h3 class="text-lg font-bold text-white">リアルタイムカメラ翻訳</h3>
-                <p class="text-xs text-slate-400 max-w-xs mx-auto">カメラに映した文字を {{ target_lang }} に自動翻訳します。</p>
-            </div>
+            {% endif %}
 
         </div>
 
         <!-- 下部：ナビゲーションアイコン -->
-        <div class="grid grid-cols-4 gap-2 pt-6 border-t border-slate-800/80 mt-6">
-            <button onclick="switchTab('text')" id="nav-text" class="nav-btn active flex flex-col items-center justify-center py-2 rounded-2xl transition text-indigo-400">
+        <div class="grid grid-cols-4 gap-2 pt-5 border-t border-slate-800/80 mt-6">
+            <button onclick="switchTab('text')" id="nav-text" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
                 <i class="fa-solid fa-pen-to-square text-lg mb-1"></i>
                 <span class="text-[11px] font-medium">テキスト</span>
             </button>
-            <button onclick="switchTab('image')" id="nav-image" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition text-slate-400 hover:text-white">
+            <button onclick="switchTab('image')" id="nav-image" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
                 <i class="fa-solid fa-image text-lg mb-1"></i>
                 <span class="text-[11px] font-medium">画像</span>
             </button>
-            <button onclick="switchTab('voice')" id="nav-voice" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition text-slate-400 hover:text-white">
+            <button onclick="switchTab('voice')" id="nav-voice" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
                 <i class="fa-solid fa-microphone text-lg mb-1"></i>
                 <span class="text-[11px] font-medium">音声</span>
             </button>
-            <button onclick="switchTab('camera')" id="nav-camera" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition text-slate-400 hover:text-white">
+            <button onclick="switchTab('camera')" id="nav-camera" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
                 <i class="fa-solid fa-camera text-lg mb-1"></i>
                 <span class="text-[11px] font-medium">カメラ</span>
             </button>
@@ -184,7 +180,7 @@
 
     </div>
 
-    <!-- JavaScript：タブ切り替え＆便利ツール -->
+    <!-- JavaScript：タブ制御＆マイク＆カメラ機能 -->
     <script>
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -200,26 +196,95 @@
             activeBtn.classList.add('text-indigo-400', 'bg-indigo-950/40');
         }
 
-        {% if not is_text_translation and translated_text %}
-            switchTab('image');
-        {% else %}
-            switchTab('text');
-        {% endif %}
+        switchTab("{{ active_mode }}");
 
-        function copyResult() {
-            const text = document.getElementById('resultText').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert('翻訳結果をクリップボードにコピーしました！');
-            });
+        // --- 音声入力機能 (Web Speech API) ---
+        let recognition = null;
+        let isRecording = false;
+
+        function toggleVoiceRecording() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert('お使いのブラウザは音声認識に対応していません。Chrome等の最新ブラウザをお使いください。');
+                return;
+            }
+
+            if (!recognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+
+                recognition.onstart = () => {
+                    isRecording = true;
+                    document.getElementById('mic-icon').className = 'fa-solid fa-square text-red-400 animate-pulse';
+                    document.getElementById('voice-status').innerText = '音声を聞き取り中...（話し終わると自動処理します）';
+                };
+
+                recognition.onresult = (event) => {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    document.getElementById('voice_text').value = transcript;
+                    document.getElementById('voice-form').classList.remove('hidden');
+                };
+
+                recognition.onend = () => {
+                    isRecording = false;
+                    document.getElementById('mic-icon').className = 'fa-solid fa-microphone';
+                    document.getElementById('voice-status').innerText = '認識完了！翻訳ボタンを押してください。';
+                    document.getElementById('voice-form').submit();
+                };
+            }
+
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
         }
 
-        function downloadText() {
+        // --- カメラ機能 (Webcam API) ---
+        let videoStream = null;
+
+        async function startCamera() {
+            try {
+                const video = document.getElementById('camera-video');
+                document.getElementById('camera-placeholder').classList.add('hidden');
+                video.classList.remove('hidden');
+
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = videoStream;
+            } catch (err) {
+                alert('カメラの起動に失敗しました: ' + err.message);
+            }
+        }
+
+        function captureCamera() {
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('camera-canvas');
+            
+            if (!video.srcObject) {
+                alert('先に「カメラ起動」ボタンを押してください。');
+                return;
+            }
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            document.getElementById('camera_data').value = dataUrl;
+            document.getElementById('camera-form').submit();
+        }
+
+        // 共通便利関数
+        function copyResult() {
             const text = document.getElementById('resultText').innerText;
-            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'translation_result.txt';
-            link.click();
+            navigator.clipboard.writeText(text).then(() => alert('クリップボードにコピーしました！'));
         }
 
         function speakText() {
@@ -227,28 +292,7 @@
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
-                const targetLang = "{{ target_lang }}";
-                
-                const langMap = {
-                    'Japanese': 'ja-JP',
-                    'English': 'en-US',
-                    'Spanish': 'es-ES',
-                    'French': 'fr-FR',
-                    'German': 'de-DE',
-                    'Chinese (Simplified)': 'zh-CN',
-                    'Chinese (Traditional)': 'zh-TW',
-                    'Korean': 'ko-KR',
-                    'Italian': 'it-IT',
-                    'Russian': 'ru-RU',
-                    'Portuguese': 'pt-PT',
-                    'Thai': 'th-TH',
-                    'Vietnamese': 'vi-VN'
-                };
-
-                utterance.lang = langMap[targetLang] || 'ja-JP';
                 window.speechSynthesis.speak(utterance);
-            } else {
-                alert('お使いのブラウザは音声読み上げに対応していません。');
             }
         }
     </script>
