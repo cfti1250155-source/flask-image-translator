@@ -24,7 +24,7 @@ SUPPORTED_LANGUAGES = [
     "Danish", "Finnish", "Norwegian"
 ]
 
-# 各言語のUI表示テキスト（下部ナビゲーション含む）
+# 各言語のUI表示テキスト（全モードのテキストを追加）
 UI_CACHE = {
     "Japanese": {
         "title": "AI万能翻訳アプリ",
@@ -32,6 +32,12 @@ UI_CACHE = {
         "btn_text_translate": "翻訳する",
         "image_input_label": "クリックして画像を選択",
         "btn_image_translate": "画像を翻訳する",
+        "voice_instruction": "マイクボタンを押して喋ってください",
+        "voice_placeholder": "聞き取った音声...",
+        "btn_voice_translate": "音声を翻訳する",
+        "camera_instruction": "「カメラ起動」を押して写真を撮影してください",
+        "btn_camera_start": "カメラ起動",
+        "btn_camera_capture": "撮影して翻訳",
         "result_label": "翻訳結果",
         "nav_text": "テキスト",
         "nav_image": "画像",
@@ -44,6 +50,12 @@ UI_CACHE = {
         "btn_text_translate": "Translate",
         "image_input_label": "Click to select image",
         "btn_image_translate": "Translate Image",
+        "voice_instruction": "Press the mic button and speak",
+        "voice_placeholder": "Recognized speech...",
+        "btn_voice_translate": "Translate Voice",
+        "camera_instruction": "Press 'Start Camera' to take a photo",
+        "btn_camera_start": "Start Camera",
+        "btn_camera_capture": "Capture & Translate",
         "result_label": "Translation Result",
         "nav_text": "Text",
         "nav_image": "Image",
@@ -56,35 +68,17 @@ UI_CACHE = {
         "btn_text_translate": "Traducir",
         "image_input_label": "Haga clic para seleccionar imagen",
         "btn_image_translate": "Traducir Imagen",
-        "result_label": "Resultado de Traducción",
+        "voice_instruction": "Presione el micrófono y hable",
+        "voice_placeholder": "Voz reconocida...",
+        "btn_voice_translate": "Traducir Voz",
+        "camera_instruction": "Presione 'Iniciar Cámara' para tomar foto",
+        "btn_camera_start": "Iniciar Cámara",
+        "btn_camera_capture": "Capturar y Traducir",
+        "result_label": "Resultado",
         "nav_text": "Texto",
         "nav_image": "Imagen",
         "nav_voice": "Voz",
         "nav_camera": "Cámara"
-    },
-    "French": {
-        "title": "Traducteur Multi-IA",
-        "text_placeholder": "Saisir du texte...",
-        "btn_text_translate": "Traduire",
-        "image_input_label": "Cliquez pour choisir une image",
-        "btn_image_translate": "Traduire l'Image",
-        "result_label": "Résultat de Traduction",
-        "nav_text": "Texte",
-        "nav_image": "Image",
-        "nav_voice": "Voix",
-        "nav_camera": "Caméra"
-    },
-    "German": {
-        "title": "KI-Multisprach-Übersetzer",
-        "text_placeholder": "Text eingeben...",
-        "btn_text_translate": "Übersetzen",
-        "image_input_label": "Klicken Sie, um ein Bild auszuwählen",
-        "btn_image_translate": "Bild übersetzen",
-        "result_label": "Übersetzungsergebnis",
-        "nav_text": "Text",
-        "nav_image": "Bild",
-        "nav_voice": "Sprache",
-        "nav_camera": "Kamera"
     },
     "Chinese (Simplified)": {
         "title": "AI 多功能翻译器",
@@ -92,23 +86,17 @@ UI_CACHE = {
         "btn_text_translate": "翻译",
         "image_input_label": "点击选择图片",
         "btn_image_translate": "翻译图片",
+        "voice_instruction": "点击麦克风按钮开始说话",
+        "voice_placeholder": "识别的语音...",
+        "btn_voice_translate": "翻译语音",
+        "camera_instruction": "点击“启动相机”拍照",
+        "btn_camera_start": "启动相机",
+        "btn_camera_capture": "拍照并翻译",
         "result_label": "翻译结果",
         "nav_text": "文本",
         "nav_image": "图片",
         "nav_voice": "语音",
         "nav_camera": "相机"
-    },
-    "Korean": {
-        "title": "AI 만능 번역기",
-        "text_placeholder": "텍스트 입력...",
-        "btn_text_translate": "번역하기",
-        "image_input_label": "클릭하여 이미지 선택",
-        "btn_image_translate": "이미지 번역하기",
-        "result_label": "번역 결과",
-        "nav_text": "텍스트",
-        "nav_image": "이미지",
-        "nav_voice": "음성",
-        "nav_camera": "카메라"
     }
 }
 
@@ -128,7 +116,6 @@ def generate_content_with_retry(prompt, retries=3, initial_delay=2):
             raise e
 
 def get_ui_labels(lang):
-    """言語設定に応じたUIラベルを取得（辞書にない言語はEnglishフォールバック）"""
     return UI_CACHE.get(lang, UI_CACHE["English"])
 
 @app.route('/select-language')
@@ -167,7 +154,6 @@ def index():
     source_lang = session.get('source_lang', 'Japanese')
     target_lang = session.get('target_lang', 'English')
     
-    # 自分側の言語 (source_lang) に連動してUI表記を変更
     ui = get_ui_labels(source_lang)
 
     ocr_text = ''
@@ -211,4 +197,34 @@ def index():
                         prompt = f"Translate the following text from {source_lang} to {target_lang} naturally without extra explanations:\n\n{ocr_text}"
                         detected_lang = source_lang
                     else:
-                        prompt = f"Identify original language, then
+                        prompt = f"Identify original language, then translate strictly into 【{target_lang}】:\nFormat:\n【Detected Language】\n(Language)\n【Translation Result】\n(Result)\nText:\n{ocr_text}"
+
+                    response = generate_content_with_retry(prompt)
+                    if response:
+                        raw_resp = response.text
+                        if "【Detected Language】" in raw_resp and "【Translation Result】" in raw_resp:
+                            parts = raw_resp.split("【Translation Result】")
+                            detected_lang = parts[0].replace("【Detected Language】", "").strip()
+                            translated_text = parts[1].strip()
+                        else:
+                            translated_text = raw_resp
+
+                except Exception as e:
+                    err_msg = str(e)
+                    if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
+                        translated_text = "⚠️ Gemini APIの上限に達しました。時間をおいてお試しください。"
+                    else:
+                        translated_text = f"AI翻訳エラー: {e}"
+
+    return render_template('index.html', 
+                           ocr_text=ocr_text, 
+                           translated_text=translated_text,
+                           detected_lang=detected_lang,
+                           source_lang=source_lang,
+                           target_lang=target_lang,
+                           ui=ui,
+                           active_mode=active_mode)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
