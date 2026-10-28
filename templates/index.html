@@ -11,11 +11,15 @@
 
     <div class="max-w-xl w-full bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 p-5 md:p-7 flex-grow flex flex-col justify-between my-auto">
         
-        <!-- ヘッダー -->
+        <!-- ヘッダー（右上に地球マークの言語変更ボタンを常時表示） -->
         <div class="flex items-center justify-between mb-4">
             <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
                 <i class="fa-solid fa-language text-indigo-400"></i> {{ ui.title }}
             </h1>
+            <!-- 全タブ共通の地球マーク言語変更ボタン -->
+            <a href="/select-language?type=target" title="翻訳先言語を変更" class="text-xs bg-slate-800/90 hover:bg-slate-700 text-indigo-300 hover:text-white px-3.5 py-1.5 rounded-full border border-slate-700 transition flex items-center gap-1.5 font-semibold shadow-sm">
+                <i class="fa-solid fa-globe text-indigo-400 text-xs"></i> {{ target_lang }}
+            </a>
         </div>
 
         <div class="flex-grow flex flex-col justify-center">
