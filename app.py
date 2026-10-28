@@ -95,7 +95,7 @@ def set_language():
 
 @app.route('/swap-language', methods=['POST'])
 def swap_language():
-    """ターゲット言語のスムーズな切り替え（入力欄の残存テキストはクリア）"""
+    """ターゲット言語のスムーズな切り替え"""
     current_target = session.get('target_lang', 'English')
     last_detected = session.get('last_detected_lang')
 
@@ -106,8 +106,6 @@ def swap_language():
 
     session['target_lang'] = new_target
     session['last_detected_lang'] = current_target
-
-    # 残っている入力プリセットテキストを完全に消去
     session.pop('input_preset', None)
 
     return redirect(url_for('index'))
@@ -123,18 +121,20 @@ def index():
     ocr_text = ''
     translated_text = ''
     detected_lang = ''
-    is_text_translation = False
+    is_text_translation = True
 
     if request.method == 'POST':
+        mode = request.form.get('mode', 'text')
         direct_text = request.form.get('direct_text')
         file = request.files.get('image')
 
-        # 1. テキスト直接入力
-        if direct_text and direct_text.strip() != '':
+        # 1. テキスト入力モード
+        if mode == 'text' and direct_text and direct_text.strip() != '':
             ocr_text = direct_text.strip()
             is_text_translation = True
-        # 2. 画像ファイル
-        elif file and file.filename != '':
+        # 2. 画像モード
+        elif mode == 'image' and file and file.filename != '':
+            is_text_translation = False
             session.pop('last_detected_lang', None)
             try:
                 image = Image.open(file.stream)

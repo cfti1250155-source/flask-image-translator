@@ -5,119 +5,189 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ ui.title }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-between p-4 selection:bg-indigo-500 selection:text-white">
 
-    <div class="max-w-2xl w-full bg-slate-800 rounded-2xl shadow-xl border border-slate-700 p-6 md:p-8">
+    <!-- メインコンテンツカード -->
+    <div class="max-w-xl w-full bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 p-5 md:p-7 flex-grow flex flex-col justify-between my-auto">
         
-        <!-- ヘッダー & 言語変更・切り替えボタン -->
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex items-center gap-2">
-                <span class="bg-indigo-900/60 text-indigo-300 text-xs font-semibold px-3 py-1 rounded-full border border-indigo-700">
-                    Target: {{ target_lang }}
-                </span>
-                <form action="/swap-language" method="POST" class="inline">
-                    <button type="submit" title="言語切り替え" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium px-2.5 py-1 rounded-full border border-slate-600 transition flex items-center gap-1">
-                        ⇄ {{ ui.get('swap_btn', '言語切り替え') }}
-                    </button>
-                </form>
-            </div>
-            <a href="/select-language" class="text-xs text-slate-400 hover:text-white underline">
-                🌐 {{ ui.change_lang }}
+        <!-- 1. 上部：言語切り替えバー（Google翻訳アプリ風） -->
+        <div class="bg-slate-800/80 rounded-2xl p-2 flex items-center justify-between border border-slate-700/60 mb-6 shadow-inner">
+            <a href="/select-language" class="flex-1 text-center font-semibold text-sm text-indigo-300 hover:text-white transition py-2 rounded-xl hover:bg-slate-700/50">
+                🌐 {{ target_lang }}
+            </a>
+            
+            <form action="/swap-language" method="POST" class="inline">
+                <button type="submit" title="言語切り替え" class="w-10 h-10 bg-slate-700 hover:bg-slate-600 active:scale-95 text-indigo-400 rounded-full flex items-center justify-center transition border border-slate-600 shadow">
+                    <i class="fa-solid fa-arrows-rotate text-sm"></i>
+                </button>
+            </form>
+
+            <a href="/select-language" class="flex-1 text-center font-semibold text-sm text-slate-400 hover:text-white transition py-2 rounded-xl hover:bg-slate-700/50">
+                {{ ui.change_lang }}
             </a>
         </div>
 
-        <div class="text-center space-y-2 mb-6">
-            <h1 class="text-3xl font-bold tracking-tight text-white">{{ ui.title }}</h1>
-            <p class="text-slate-400 text-sm">{{ ui.subtitle }}</p>
-        </div>
+        <!-- 2. 中央：各モードのコンテンツエリア -->
+        <div class="flex-grow flex flex-col justify-center">
 
-        <!-- 1. テキスト直接入力フォーム -->
-        <form action="/" method="POST" class="space-y-3 mb-6">
-            <div>
-                <label class="block text-sm font-medium text-slate-300 mb-2">{{ ui.text_input_label }}</label>
-                <!-- 入力欄（テキストエリア）を常にクリアな状態に設定 -->
-                <textarea name="direct_text" rows="3" class="w-full p-3 rounded-xl bg-slate-900 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-slate-500" placeholder="{{ ui.text_placeholder }}"></textarea>
-            </div>
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-4 rounded-xl shadow-lg transition text-sm">
-                {{ ui.btn_text_translate }}
-            </button>
-        </form>
-
-        <div class="relative flex py-2 items-center mb-6">
-            <div class="flex-grow border-t border-slate-700"></div>
-            <span class="flex-shrink mx-4 text-slate-500 text-xs font-semibold">{{ ui.or }}</span>
-            <div class="flex-grow border-t border-slate-700"></div>
-        </div>
-
-        <!-- 2. 画像送信フォーム -->
-        <form action="/" method="POST" enctype="multipart/form-data" class="space-y-4">
-            <div class="flex flex-col items-center justify-center w-full">
-                <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-slate-600 border-dashed rounded-xl cursor-pointer bg-slate-700/50 hover:bg-slate-700 transition">
-                    <div class="flex flex-col items-center justify-center pt-4 pb-4">
-                        <p class="text-sm text-slate-300 font-medium">{{ ui.image_input_label }}</p>
+            <!-- 【テキスト翻訳モード】 -->
+            <div id="tab-text" class="tab-content space-y-4">
+                <form action="/" method="POST" class="space-y-3">
+                    <input type="hidden" name="mode" value="text">
+                    <div class="relative">
+                        <textarea name="direct_text" rows="5" class="w-full p-4 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 text-base placeholder-slate-600 resize-none shadow-inner" placeholder="{{ ui.text_placeholder }}">{{ ocr_text if is_text_translation else '' }}</textarea>
                     </div>
-                    <input type="file" name="image" accept="image/*" class="hidden" onchange="document.getElementById('file-name').innerText = this.files[0].name">
-                </label>
-                <p id="file-name" class="text-xs text-indigo-400 mt-2 h-4"></p>
-            </div>
+                    <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold py-3 px-4 rounded-2xl shadow-lg transition active:scale-[0.99] flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-language"></i> {{ ui.btn_text_translate }}
+                    </button>
+                </form>
 
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg transition">
-                {{ ui.btn_image_translate }}
-            </button>
-        </form>
-
-        <!-- 結果表示部分 -->
-        {% if ocr_text or translated_text %}
-        <div class="mt-8 space-y-4 pt-6 border-t border-slate-700">
-            {% if ocr_text and translated_text %}
-            <div>
-                <h2 class="text-sm font-medium text-slate-400 mb-1">{{ ui.target_text_label }}</h2>
-                <div class="p-4 bg-slate-900 rounded-xl border border-slate-700 text-slate-200 text-sm whitespace-pre-wrap">{{ ocr_text }}</div>
-            </div>
-            {% endif %}
-
-            {% if translated_text %}
-            <div>
-                <div class="flex justify-between items-center mb-2">
-                    <div class="flex items-center gap-2">
-                        <h2 class="text-sm font-medium text-indigo-400">{{ ui.result_label }}</h2>
-                        {% if detected_lang %}
-                        <span class="bg-slate-700/80 text-emerald-400 text-xs px-2.5 py-0.5 rounded-full border border-slate-600 font-medium">
-                            🌐 {{ ui.get('detected_label', '検出言語') }}: {{ detected_lang }}
-                        </span>
-                        {% endif %}
-                    </div>
-                    <!-- 便利ツールボタン群 -->
-                    <div class="flex space-x-2">
-                        {% if is_text_translation %}
-                        <form action="/swap-language" method="POST" class="inline">
-                            <button type="submit" title="言語切り替え" class="px-2.5 py-1 bg-indigo-800 hover:bg-indigo-700 text-indigo-200 rounded-lg text-xs font-medium transition flex items-center gap-1 border border-indigo-600">
-                                ⇄ {{ ui.get('swap_btn', '言語切り替え') }}
+                <!-- テキスト翻訳の結果出力枠 -->
+                {% if translated_text and is_text_translation %}
+                <div class="mt-6 p-5 bg-indigo-950/40 rounded-2xl border border-indigo-800/60 space-y-3">
+                    <div class="flex justify-between items-center border-b border-indigo-900/50 pb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">{{ ui.result_label }}</span>
+                            {% if detected_lang %}
+                            <span class="bg-emerald-950/80 text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-800">
+                                🌐 {{ detected_lang }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="flex space-x-1">
+                            <button type="button" onclick="speakText()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                                <i class="fa-solid fa-volume-high"></i>
                             </button>
-                        </form>
-                        {% endif %}
-                        <button type="button" onclick="speakText()" title="音声読み上げ" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1">
-                            🔊 読み上げ
-                        </button>
-                        <button type="button" onclick="copyResult()" title="テキストコピー" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1">
-                            📋 コピー
-                        </button>
-                        <button type="button" onclick="downloadText()" title="ファイル保存" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1">
-                            💾 保存
-                        </button>
+                            <button type="button" onclick="copyResult()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                            <button type="button" onclick="downloadText()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                                <i class="fa-solid fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="resultText" class="text-indigo-100 text-base font-medium whitespace-pre-wrap leading-relaxed">{{ translated_text }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 【画像翻訳モード】 -->
+            <div id="tab-image" class="tab-content hidden space-y-4">
+                <form action="/" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    <input type="hidden" name="mode" value="image">
+                    <div class="flex flex-col items-center justify-center w-full">
+                        <label class="flex flex-col items-center justify-center w-full h-44 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/40 hover:bg-slate-800/40 transition">
+                            <div class="flex flex-col items-center justify-center p-4 text-center">
+                                <i class="fa-solid fa-image text-3xl text-indigo-400 mb-2"></i>
+                                <p class="text-sm text-slate-300 font-medium">{{ ui.image_input_label }}</p>
+                                <p class="text-xs text-slate-500 mt-1">PNG, JPG, WEBP 対応</p>
+                            </div>
+                            <input type="file" name="image" accept="image/*" class="hidden" onchange="document.getElementById('file-name').innerText = this.files[0].name">
+                        </label>
+                        <p id="file-name" class="text-xs text-indigo-400 mt-2 h-4 font-medium"></p>
+                    </div>
+
+                    <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold py-3 px-4 rounded-2xl shadow-lg transition active:scale-[0.99] flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-invoice"></i> {{ ui.btn_image_translate }}
+                    </button>
+                </form>
+
+                <!-- 画像翻訳の結果出力枠 -->
+                {% if translated_text and not is_text_translation %}
+                <div class="mt-6 p-5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-4">
+                    {% if ocr_text %}
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 block mb-1">OCR 抽出テキスト</span>
+                        <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs text-slate-300 max-h-32 overflow-y-auto whitespace-pre-wrap">{{ ocr_text }}</div>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">{{ ui.result_label }}</span>
+                            <div class="flex space-x-1">
+                                <button type="button" onclick="speakText()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                                <button type="button" onclick="copyResult()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                                    <i class="fa-solid fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="resultText" class="p-3 bg-indigo-950/50 rounded-xl border border-indigo-800/60 text-indigo-100 text-sm whitespace-pre-wrap">{{ translated_text }}</div>
                     </div>
                 </div>
-                <div id="resultText" class="p-4 bg-indigo-950/50 rounded-xl border border-indigo-800 text-indigo-100 text-base font-medium whitespace-pre-wrap">{{ translated_text }}</div>
+                {% endif %}
             </div>
-            {% endif %}
+
+            <!-- 【音声翻訳モード（準備中UI）】 -->
+            <div id="tab-voice" class="tab-content hidden text-center py-10 space-y-4">
+                <div class="w-20 h-20 bg-indigo-600/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto text-3xl border border-indigo-500/30">
+                    <i class="fa-solid fa-microphone"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">音声入力翻訳</h3>
+                <p class="text-xs text-slate-400 max-w-xs mx-auto">マイクに向かって話した言葉をリアルタイムで文字起こし＆翻訳します（次回追加予定）。</p>
+            </div>
+
+            <!-- 【カメラ翻訳モード（準備中UI）】 -->
+            <div id="tab-camera" class="tab-content hidden text-center py-10 space-y-4">
+                <div class="w-20 h-20 bg-indigo-600/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto text-3xl border border-indigo-500/30">
+                    <i class="fa-solid fa-camera"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">リアルタイムカメラ翻訳</h3>
+                <p class="text-xs text-slate-400 max-w-xs mx-auto">カメラでかざした文字をリアルタイムで翻訳・画像解析します（次回追加予定）。</p>
+            </div>
+
         </div>
-        {% endif %}
+
+        <!-- 3. 下部：ナビゲーションアイコン（Google翻訳アプリ風） -->
+        <div class="grid grid-cols-4 gap-2 pt-6 border-t border-slate-800/80 mt-6">
+            <button onclick="switchTab('text')" id="nav-text" class="nav-btn active flex flex-col items-center justify-center py-2 rounded-2xl transition text-indigo-400">
+                <i class="fa-solid fa-pen-to-square text-lg mb-1"></i>
+                <span class="text-[11px] font-medium">テキスト</span>
+            </button>
+            <button onclick="switchTab('image')" id="nav-image" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition text-slate-400 hover:text-white">
+                <i class="fa-solid fa-image text-lg mb-1"></i>
+                <span class="text-[11px] font-medium">画像</span>
+            </button>
+            <button onclick="switchTab('voice')" id="nav-voice" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition text-slate-400 hover:text-white">
+                <i class="fa-solid fa-microphone text-lg mb-1"></i>
+                <span class="text-[11px] font-medium">音声</span>
+            </button>
+            <button onclick="switchTab('camera')" id="nav-camera" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition text-slate-400 hover:text-white">
+                <i class="fa-solid fa-camera text-lg mb-1"></i>
+                <span class="text-[11px] font-medium">カメラ</span>
+            </button>
+        </div>
 
     </div>
 
-    <!-- JavaScript ツール関数群 -->
+    <!-- JavaScript：タブ切り替え＆便利ツール -->
     <script>
+        function switchTab(tabName) {
+            // コンテンツの非表示・表示切り替え
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+
+            // ナビボタンのハイライト切り替え
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-indigo-400', 'bg-indigo-950/40');
+                btn.classList.add('text-slate-400');
+            });
+
+            const activeBtn = document.getElementById('nav-' + tabName);
+            activeBtn.classList.remove('text-slate-400');
+            activeBtn.classList.add('text-indigo-400', 'bg-indigo-950/40');
+        }
+
+        // POST直後のタブ自動復元
+        {% if not is_text_translation and translated_text %}
+            switchTab('image');
+        {% else %}
+            switchTab('text');
+        {% endif %}
+
         function copyResult() {
             const text = document.getElementById('resultText').innerText;
             navigator.clipboard.writeText(text).then(() => {
