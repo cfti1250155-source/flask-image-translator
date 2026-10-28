@@ -11,11 +11,15 @@
 
     <div class="max-w-xl w-full bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 p-5 md:p-7 flex-grow flex flex-col justify-between my-auto">
         
-        <!-- ヘッダー -->
-        <div class="flex items-center justify-center mb-6">
+<!-- ヘッダー -->
+        <div class="flex items-center justify-between mb-4 mt-2">
             <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
                 <i class="fa-solid fa-language text-indigo-400"></i> {{ ui.get('title', 'AI Multi-Translator') }}
             </h1>
+            <!-- 地球マーク（アプリのUI言語 兼 翻訳元言語の変更） -->
+            <a href="/select-language?type=source" title="アプリの言語を変更" class="text-xs bg-slate-800/90 hover:bg-slate-700 text-indigo-300 hover:text-white px-3.5 py-1.5 rounded-full border border-slate-700 transition flex items-center gap-1.5 font-semibold shadow-sm">
+                <i class="fa-solid fa-globe text-indigo-400 text-xs"></i> {{ source_lang }}
+            </a>
         </div>
 
         <div class="flex-grow flex flex-col justify-center">
