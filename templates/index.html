@@ -12,42 +12,62 @@
     <!-- メインコンテンツカード -->
     <div class="max-w-xl w-full bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 p-5 md:p-7 flex-grow flex flex-col justify-between my-auto">
         
-        <!-- 1. 上部：言語表示＆切り替えバー -->
-        <div class="bg-slate-800/80 rounded-2xl p-2 flex items-center justify-between border border-slate-700/60 mb-6 shadow-inner">
-            <a href="/select-language" class="flex-1 text-center font-semibold text-sm text-indigo-300 hover:text-white transition py-2 rounded-xl hover:bg-slate-700/50">
-                🌐 {{ target_lang }}
-            </a>
-            
-            <!-- テキストタブ時のみ表示される切り替えボタン -->
-            <form id="header-swap-form" action="/swap-language" method="POST" class="inline">
-                <button type="submit" title="言語切り替え" class="w-10 h-10 bg-slate-700 hover:bg-slate-600 active:scale-95 text-indigo-400 rounded-full flex items-center justify-center transition border border-slate-600 shadow mx-2">
-                    <i class="fa-solid fa-arrows-rotate text-sm"></i>
-                </button>
-            </form>
-
-            <a href="/select-language" class="flex-1 text-center font-semibold text-sm text-slate-400 hover:text-white transition py-2 rounded-xl hover:bg-slate-700/50">
-                {{ ui.change_lang }}
+        <!-- ヘッダー -->
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                <i class="fa-solid fa-language text-indigo-400"></i> {{ ui.title }}
+            </h1>
+            <a href="/select-language" class="text-xs bg-slate-800 hover:bg-slate-700 text-indigo-300 px-3 py-1.5 rounded-full border border-slate-700 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-globe text-xs"></i> {{ target_lang }}
             </a>
         </div>
 
-        <!-- 2. 中央：各モードのコンテンツエリア -->
+        <!-- 中央：各モードのコンテンツエリア -->
         <div class="flex-grow flex flex-col justify-center">
 
             <!-- 【テキスト翻訳モード】 -->
-            <div id="tab-text" class="tab-content space-y-4">
+            <div id="tab-text" class="tab-content space-y-3">
+                
+                <!-- iTranslate風 言語切り替え・選択バー（テキスト入力の直上に配置） -->
+                <div class="flex items-center justify-between gap-2 bg-slate-950/60 p-2 rounded-2xl border border-slate-800/80 shadow-inner">
+                    <!-- 左：検出言語表示 -->
+                    <div class="flex-1 bg-slate-900/80 rounded-xl py-2 px-3 text-center border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-medium">From</span>
+                        <span class="text-xs md:text-sm font-semibold text-slate-200">
+                            {% if detected_lang %}{{ detected_lang }}{% else %}自動検出{% endif %}
+                        </span>
+                    </div>
+
+                    <!-- 中央：⇄ 切り替えボタン -->
+                    <form action="/swap-language" method="POST" class="inline">
+                        <button type="submit" title="言語切り替え" class="w-9 h-9 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white rounded-xl flex items-center justify-center transition border border-indigo-400/30 shadow-md">
+                            <i class="fa-solid fa-arrows-rotate text-xs"></i>
+                        </button>
+                    </form>
+
+                    <!-- 右：翻訳先言語（タップで検索バー付きの言語選択画面へ飛ぶ） -->
+                    <a href="/select-language" title="翻訳先言語を選択" class="flex-1 bg-indigo-950/80 hover:bg-indigo-900/80 rounded-xl py-2 px-3 text-center border border-indigo-700/60 transition group">
+                        <span class="text-[10px] text-indigo-400 block font-medium group-hover:text-indigo-300">To</span>
+                        <span class="text-xs md:text-sm font-bold text-indigo-200 group-hover:text-white flex items-center justify-center gap-1">
+                            {{ target_lang }} <i class="fa-solid fa-chevron-right text-[10px] opacity-60"></i>
+                        </span>
+                    </a>
+                </div>
+
+                <!-- テキスト入力フォーム -->
                 <form action="/" method="POST" class="space-y-3">
                     <input type="hidden" name="mode" value="text">
                     <div class="relative">
                         <textarea name="direct_text" rows="5" class="w-full p-4 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 text-base placeholder-slate-600 resize-none shadow-inner" placeholder="{{ ui.text_placeholder }}"></textarea>
                     </div>
                     <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold py-3 px-4 rounded-2xl shadow-lg transition active:scale-[0.99] flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-language"></i> {{ ui.btn_text_translate }}
+                        <i class="fa-solid fa-paper-plane"></i> {{ ui.btn_text_translate }}
                     </button>
                 </form>
 
                 <!-- テキスト翻訳の結果出力枠 -->
                 {% if translated_text and is_text_translation %}
-                <div class="mt-6 p-5 bg-indigo-950/40 rounded-2xl border border-indigo-800/60 space-y-3">
+                <div class="mt-4 p-5 bg-indigo-950/40 rounded-2xl border border-indigo-800/60 space-y-3">
                     <div class="flex justify-between items-center border-b border-indigo-900/50 pb-2">
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">{{ ui.result_label }}</span>
@@ -128,7 +148,7 @@
                     <i class="fa-solid fa-microphone"></i>
                 </div>
                 <h3 class="text-lg font-bold text-white">音声入力翻訳</h3>
-                <p class="text-xs text-slate-400 max-w-xs mx-auto">話した言葉をあなたの設定言語（{{ target_lang }}）に自動翻訳します。</p>
+                <p class="text-xs text-slate-400 max-w-xs mx-auto">話した言葉を {{ target_lang }} に自動翻訳します。</p>
             </div>
 
             <!-- 【カメラ翻訳モード（準備中）】 -->
@@ -137,12 +157,12 @@
                     <i class="fa-solid fa-camera"></i>
                 </div>
                 <h3 class="text-lg font-bold text-white">リアルタイムカメラ翻訳</h3>
-                <p class="text-xs text-slate-400 max-w-xs mx-auto">カメラに映した文字をあなたの設定言語（{{ target_lang }}）に自動翻訳します。</p>
+                <p class="text-xs text-slate-400 max-w-xs mx-auto">カメラに映した文字を {{ target_lang }} に自動翻訳します。</p>
             </div>
 
         </div>
 
-        <!-- 3. 下部：ナビゲーションアイコン -->
+        <!-- 下部：ナビゲーションアイコン -->
         <div class="grid grid-cols-4 gap-2 pt-6 border-t border-slate-800/80 mt-6">
             <button onclick="switchTab('text')" id="nav-text" class="nav-btn active flex flex-col items-center justify-center py-2 rounded-2xl transition text-indigo-400">
                 <i class="fa-solid fa-pen-to-square text-lg mb-1"></i>
@@ -164,14 +184,12 @@
 
     </div>
 
-    <!-- JavaScript：タブ切り替え＆言語スワップボタン制御 -->
+    <!-- JavaScript：タブ切り替え＆便利ツール -->
     <script>
         function switchTab(tabName) {
-            // コンテンツの非表示・表示切り替え
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById('tab-' + tabName).classList.remove('hidden');
 
-            // ナビボタンのハイライト切り替え
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('text-indigo-400', 'bg-indigo-950/40');
                 btn.classList.add('text-slate-400');
@@ -180,19 +198,8 @@
             const activeBtn = document.getElementById('nav-' + tabName);
             activeBtn.classList.remove('text-slate-400');
             activeBtn.classList.add('text-indigo-400', 'bg-indigo-950/40');
-
-            // テキストタブの時のみ「言語切り替え（⇄）」ボタンを表示
-            const swapForm = document.getElementById('header-swap-form');
-            if (swapForm) {
-                if (tabName === 'text') {
-                    swapForm.style.display = 'inline-block';
-                } else {
-                    swapForm.style.display = 'none';
-                }
-            }
         }
 
-        // POST直後のタブ自動復元
         {% if not is_text_translation and translated_text %}
             switchTab('image');
         {% else %}
