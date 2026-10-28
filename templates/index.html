@@ -16,7 +16,6 @@
             <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
                 <i class="fa-solid fa-language text-indigo-400"></i> {{ ui.title }}
             </h1>
-            <!-- 全タブ共通の地球マーク言語変更ボタン -->
             <a href="/select-language?type=target" title="翻訳先言語を変更" class="text-xs bg-slate-800/90 hover:bg-slate-700 text-indigo-300 hover:text-white px-3.5 py-1.5 rounded-full border border-slate-700 transition flex items-center gap-1.5 font-semibold shadow-sm">
                 <i class="fa-solid fa-globe text-indigo-400 text-xs"></i> {{ target_lang }}
             </a>
@@ -24,24 +23,21 @@
 
         <div class="flex-grow flex flex-col justify-center">
 
-            <!-- 1. 【テキスト翻訳モード】 (Google翻訳風 言語切り替えバー) -->
+            <!-- 1. 【テキスト翻訳モード】 -->
             <div id="tab-text" class="tab-content space-y-4">
                 
-                <!-- Google翻訳風 言語切り替えバー（入力 ⇄ 翻訳先） -->
+                <!-- Google翻訳風 言語切り替えバー -->
                 <div class="flex items-center justify-between gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800 shadow-lg">
-                    <!-- 左：入力言語選択ボタン -->
                     <a href="/select-language?type=source" class="flex-1 bg-slate-800/90 hover:bg-slate-700 text-slate-100 font-bold py-3 px-3 rounded-xl text-center text-sm md:text-base border border-slate-700/80 transition flex items-center justify-center gap-1">
                         {{ source_lang }}
                     </a>
 
-                    <!-- 中央：ワンタップ入れ替えボタン (⇄) -->
                     <form action="/swap-language" method="POST" class="inline">
                         <button type="submit" title="言語を入れ替える" class="w-10 h-10 bg-slate-800 hover:bg-indigo-600 active:scale-90 text-indigo-400 hover:text-white rounded-full flex items-center justify-center transition border border-slate-700 shadow-md">
                             <i class="fa-solid fa-arrows-rotate text-sm"></i>
                         </button>
                     </form>
 
-                    <!-- 右：翻訳先言語選択ボタン -->
                     <a href="/select-language?type=target" class="flex-1 bg-slate-800/90 hover:bg-slate-700 text-slate-100 font-bold py-3 px-3 rounded-xl text-center text-sm md:text-base border border-slate-700/80 transition flex items-center justify-center gap-1">
                         {{ target_lang }}
                     </a>
@@ -55,7 +51,6 @@
                     </button>
                 </form>
 
-                <!-- テキスト専用 結果表示エリア -->
                 {% if translated_text and active_mode == 'text' %}
                 <div class="mt-4 p-5 bg-indigo-950/40 rounded-2xl border border-indigo-800/60 space-y-3">
                     <div class="flex justify-between items-center border-b border-indigo-900/50 pb-2">
@@ -231,23 +226,23 @@
 
         </div>
 
-        <!-- 下部：ナビゲーションアイコン -->
+        <!-- 下部：ナビゲーションアイコン（言語設定に連動） -->
         <div class="grid grid-cols-4 gap-2 pt-5 border-t border-slate-800/80 mt-6">
             <button onclick="switchTab('text')" id="nav-text" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
                 <i class="fa-solid fa-pen-to-square text-lg mb-1"></i>
-                <span class="text-[11px] font-medium">テキスト</span>
+                <span class="text-[11px] font-medium">{{ ui.nav_text }}</span>
             </button>
             <button onclick="switchTab('image')" id="nav-image" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
                 <i class="fa-solid fa-image text-lg mb-1"></i>
-                <span class="text-[11px] font-medium">画像</span>
+                <span class="text-[11px] font-medium">{{ ui.nav_image }}</span>
             </button>
             <button onclick="switchTab('voice')" id="nav-voice" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
                 <i class="fa-solid fa-microphone text-lg mb-1"></i>
-                <span class="text-[11px] font-medium">音声</span>
+                <span class="text-[11px] font-medium">{{ ui.nav_voice }}</span>
             </button>
             <button onclick="switchTab('camera')" id="nav-camera" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
                 <i class="fa-solid fa-camera text-lg mb-1"></i>
-                <span class="text-[11px] font-medium">カメラ</span>
+                <span class="text-[11px] font-medium">{{ ui.nav_camera }}</span>
             </button>
         </div>
 
