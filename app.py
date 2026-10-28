@@ -95,31 +95,20 @@ def set_language():
 
 @app.route('/swap-language', methods=['POST'])
 def swap_language():
-    """テキスト入力の言語・文章の完全双方向切り替え（Target ⇄ 検出言語）"""
+    """ターゲット言語のスムーズな切り替え（入力欄の残存テキストはクリア）"""
     current_target = session.get('target_lang', 'English')
     last_detected = session.get('last_detected_lang')
-    last_input = session.get('last_input_text', '')
-    last_result = session.get('last_translation_result', '')
 
-    # 1. ターゲット言語と検出言語の完全入れ替え
-    if last_detected and last_detected in SUPPORTED_LANGUAGES:
+    if last_detected and last_detected in SUPPORTED_LANGUAGES and last_detected != current_target:
         new_target = last_detected
-        new_detected = current_target
     else:
         new_target = "Japanese" if current_target != "Japanese" else "English"
-        new_detected = current_target
 
     session['target_lang'] = new_target
-    session['last_detected_lang'] = new_detected
+    session['last_detected_lang'] = current_target
 
-    # 2. 入力テキストと翻訳結果テキストの入れ替え
-    if last_result or last_input:
-        new_input = last_result if last_result else last_input
-        new_result = last_input if last_result else ""
-        
-        session['input_preset'] = new_input
-        session['last_input_text'] = new_input
-        session['last_translation_result'] = new_result
+    # 残っている入力プリセットテキストを完全に消去
+    session.pop('input_preset', None)
 
     return redirect(url_for('index'))
 
@@ -131,7 +120,7 @@ def index():
     target_lang = session.get('target_lang', 'English')
     ui = get_ui_labels(target_lang)
 
-    ocr_text = session.pop('input_preset', '')
+    ocr_text = ''
     translated_text = ''
     detected_lang = ''
     is_text_translation = False
@@ -144,11 +133,9 @@ def index():
         if direct_text and direct_text.strip() != '':
             ocr_text = direct_text.strip()
             is_text_translation = True
-        # 2. 画像ファイル（画像翻訳時はテキスト入れ替え履歴をクリア）
+        # 2. 画像ファイル
         elif file and file.filename != '':
             session.pop('last_detected_lang', None)
-            session.pop('last_translation_result', None)
-            session.pop('last_input_text', None)
             try:
                 image = Image.open(file.stream)
                 ocr_text = pytesseract.image_to_string(image, lang='eng+jpn')
@@ -183,8 +170,6 @@ Text:
 
                         if is_text_translation and detected_lang:
                             session['last_detected_lang'] = detected_lang
-                            session['last_input_text'] = ocr_text
-                            session['last_translation_result'] = translated_text
 
                 except Exception as e:
                     err_msg = str(e)
