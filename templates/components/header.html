@@ -1,0 +1,28 @@
+<!-- ヘッダー & 地球マーク -->
+<div class="flex items-center justify-between mb-4 mt-2">
+    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+        <i class="fa-solid fa-language text-indigo-400"></i> {{ ui.get('title', 'AI Multi-Translator') }}
+    </h1>
+    <a href="/select-language?type=source" title="アプリの言語を変更" class="text-xs bg-slate-800/90 hover:bg-slate-700 text-indigo-300 hover:text-white px-3.5 py-1.5 rounded-full border border-slate-700 transition flex items-center gap-1.5 font-semibold shadow-sm">
+        <i class="fa-solid fa-globe text-indigo-400 text-xs"></i> {{ source_lang }}
+    </a>
+</div>
+
+<!-- 言語選択バー -->
+<div class="flex items-center justify-between gap-4 mb-6 transition-all duration-300">
+    <div id="source-lang-container" class="flex-1">
+        <a href="/select-language?type=source" class="block w-full bg-slate-800/80 hover:bg-slate-700 text-white px-4 py-3 rounded-xl border border-slate-700 transition text-center font-medium shadow-sm">
+            {{ source_lang }}
+        </a>
+    </div>
+    
+    <button id="swap-lang-btn" onclick="window.location.href='/swap-language'" class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-slate-800/80 hover:bg-slate-700 text-indigo-400 rounded-full border border-slate-700 transition shadow-sm hover:shadow-md">
+        <i class="fa-solid fa-sync-alt"></i>
+    </button>
+    
+    <div id="target-lang-container" class="flex-1 transition-all duration-300">
+        <a href="/select-language?type=target" class="block w-full bg-slate-800/80 hover:bg-slate-700 text-white px-4 py-3 rounded-xl border border-slate-700 transition text-center font-medium shadow-sm">
+            {{ target_lang }}
+        </a>
+    </div>
+</div>

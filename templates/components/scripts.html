@@ -1,0 +1,122 @@
+<script>
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        const targetTab = document.getElementById('tab-' + tabName);
+        if (targetTab) targetTab.classList.remove('hidden');
+
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.remove('text-indigo-400', 'bg-indigo-950/40');
+            btn.classList.add('text-slate-400');
+        });
+
+        const activeBtn = document.getElementById('nav-' + tabName);
+        if (activeBtn) {
+            activeBtn.classList.remove('text-slate-400');
+            activeBtn.classList.add('text-indigo-400', 'bg-indigo-950/40');
+        }
+
+        const sourceLang = document.getElementById('source-lang-container');
+        const swapBtn = document.getElementById('swap-lang-btn');
+        const targetLang = document.getElementById('target-lang-container');
+
+        if (tabName === 'text') {
+            if (sourceLang) sourceLang.style.display = 'block';
+            if (swapBtn) swapBtn.style.display = 'flex';
+            if (targetLang) {
+                targetLang.style.width = '';
+                targetLang.style.margin = '';
+            }
+        } else {
+            if (sourceLang) sourceLang.style.display = 'none';
+            if (swapBtn) swapBtn.style.display = 'none';
+            if (targetLang) {
+                targetLang.style.width = '100%';
+                targetLang.style.maxWidth = '250px';
+                targetLang.style.margin = '0 auto';
+            }
+        }
+    }
+
+    switchTab("{{ active_mode }}");
+
+    let recognition = null;
+    let isRecording = false;
+
+    function toggleVoiceRecording() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert('Speech recognition is not supported in this browser.');
+            return;
+        }
+
+        if (!recognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+
+            recognition.onstart = () => {
+                isRecording = true;
+                document.getElementById('mic-icon').className = 'fa-solid fa-square text-red-400 animate-pulse';
+                document.getElementById('voice-status').innerText = '...';
+            };
+
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                document.getElementById('voice_text').value = transcript;
+                document.getElementById('voice-form').classList.remove('hidden');
+            };
+
+            recognition.onend = () => {
+                isRecording = false;
+                document.getElementById('mic-icon').className = 'fa-solid fa-microphone';
+                document.getElementById('voice-form').submit();
+            };
+        }
+
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
+    }
+
+    let videoStream = null;
+
+    async function startCamera() {
+        try {
+            const video = document.getElementById('camera-video');
+            document.getElementById('camera-placeholder').classList.add('hidden');
+            video.classList.remove('hidden');
+
+            videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            video.srcObject = videoStream;
+        } catch (err) {
+            alert('Camera error: ' + err.message);
+        }
+    }
+
+    function captureCamera() {
+        const video = document.getElementById('camera-video');
+        const canvas = document.getElementById('camera-canvas');
+        
+        if (!video.srcObject) return;
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        document.getElementById('camera_data').value = dataUrl;
+        document.getElementById('camera-form').submit();
+    }
+
+    function copyResult(elementId) {
+        const targetEl = document.getElementById(elementId);
+        if (!targetEl) return;
+        navigator.clipboard.writeText(targetEl.innerText);
+    }
+</script>
