@@ -11,11 +11,9 @@ from PIL import Image
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "app-secret-key-12345")
 
-# APIキーの取得とクライアント初期化
 api_key = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key) if api_key else None
 
-# サポートする言語リスト（全33言語）
 SUPPORTED_LANGUAGES = [
     "Japanese", "English", "Spanish", "French", "German", 
     "Chinese (Simplified)", "Chinese (Traditional)", "Korean", "Italian", "Russian", 
@@ -26,46 +24,32 @@ SUPPORTED_LANGUAGES = [
     "Danish", "Finnish", "Norwegian"
 ]
 
-# UI辞書
 UI_CACHE = {
     "Japanese": {
         "title": "📷 AI万能翻訳アプリ",
-        "subtitle": "テキスト・画像・音声・カメラから高精度翻訳",
-        "text_placeholder": "翻訳したい文章を入力...",
-        "btn_text_translate": "テキストを翻訳する",
+        "text_placeholder": "テキストを入力...",
+        "btn_text_translate": "翻訳する",
         "image_input_label": "クリックして画像を選択",
         "btn_image_translate": "画像を翻訳する",
-        "result_label": "翻訳・AI校正結果",
-        "change_lang": "言語変更",
-        "swap_btn": "言語切り替え",
-        "detected_label": "検出言語"
+        "result_label": "翻訳結果"
     },
     "English": {
         "title": "📷 AI Multi-Translator",
-        "subtitle": "Translate text, image, voice, and camera",
-        "text_placeholder": "Enter text to translate...",
-        "btn_text_translate": "Translate Text",
+        "text_placeholder": "Enter text...",
+        "btn_text_translate": "Translate",
         "image_input_label": "Click to select image",
         "btn_image_translate": "Translate Image",
-        "result_label": "Translation & AI Result",
-        "change_lang": "Change Language",
-        "swap_btn": "Swap Language",
-        "detected_label": "Detected Language"
+        "result_label": "Translation Result"
     }
 }
 
 def generate_content_with_retry(prompt, retries=3, initial_delay=2):
-    """Gemini APIの一時的混雑に対応する自動リトライ"""
     if not client:
         return None
     delay = initial_delay
     for attempt in range(retries):
         try:
-            response = client.models.generate_content(
-                model='gemini-3.8-flash',
-                contents=prompt
-            )
-            return response
+            return client.models.generate_content(model='gemini-3.8-flash', contents=prompt)
         except Exception as e:
             if "503" in str(e) or "UNAVAILABLE" in str(e):
                 if attempt < retries - 1:
@@ -74,41 +58,43 @@ def generate_content_with_retry(prompt, retries=3, initial_delay=2):
                     continue
             raise e
 
-def get_ui_labels(target_lang):
-    return UI_CACHE.get(target_lang, UI_CACHE["English"])
-
 @app.route('/select-language')
 def select_language():
-    return render_template('select_language.html', languages=SUPPORTED_LANGUAGES)
+    lang_type = request.args.get('type', 'target')
+    return render_template('select_language.html', languages=SUPPORTED_LANGUAGES, lang_type=lang_type)
 
 @app.route('/set-language', methods=['POST'])
 def set_language():
-    target_lang = request.form.get('target_lang', 'English')
-    session['target_lang'] = target_lang
+    selected_lang = request.form.get('target_lang', 'English')
+    lang_type = request.form.get('lang_type', 'target')
+    
+    if lang_type == 'source':
+        session['source_lang'] = selected_lang
+    else:
+        session['target_lang'] = selected_lang
+        
     return redirect(url_for('index'))
 
 @app.route('/swap-language', methods=['POST'])
 def swap_language():
-    """テキスト翻訳の言語双方向切り替え"""
-    current_target = session.get('target_lang', 'English')
-    last_detected = session.get('last_detected_lang')
+    """入力言語（Source）と翻訳先言語（Target）を瞬時にワンタップで入れ替え"""
+    source_lang = session.get('source_lang', 'Japanese')
+    target_lang = session.get('target_lang', 'English')
 
-    if last_detected and last_detected in SUPPORTED_LANGUAGES and last_detected != current_target:
-        new_target = last_detected
-    else:
-        new_target = "Japanese" if current_target != "Japanese" else "English"
-
-    session['target_lang'] = new_target
-    session['last_detected_lang'] = current_target
+    session['source_lang'] = target_lang
+    session['target_lang'] = source_lang
     return redirect(url_for('index'))
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    if 'source_lang' not in session:
+        session['source_lang'] = 'Japanese'
     if 'target_lang' not in session:
-        return redirect(url_for('select_language'))
+        session['target_lang'] = 'English'
 
+    source_lang = session.get('source_lang', 'Japanese')
     target_lang = session.get('target_lang', 'English')
-    ui = get_ui_labels(target_lang)
+    ui = UI_CACHE.get(target_lang, UI_CACHE["English"])
 
     ocr_text = ''
     translated_text = ''
@@ -118,10 +104,8 @@ def index():
     if request.method == 'POST':
         mode = request.form.get('mode', 'text')
         active_mode = mode
-
         raw_input_text = ""
 
-        # モードごとの入力処理
         if mode == 'text':
             raw_input_text = request.form.get('direct_text', '').strip()
         elif mode == 'voice':
@@ -146,23 +130,15 @@ def index():
 
         ocr_text = raw_input_text
 
-        # Gemini APIによる言語検出と翻訳
         if ocr_text and not ocr_text.startswith("文字認識エラー") and not ocr_text.startswith("カメラ画像解析エラー"):
             if client:
                 try:
-                    prompt = f"""
-Identify the original language of the text below, and translate it naturally into 【{target_lang}】.
-Do not include extra explanations. Output strictly in this format:
+                    if mode == 'text':
+                        prompt = f"Translate the following text from {source_lang} to {target_lang} naturally without extra explanations:\n\n{ocr_text}"
+                        detected_lang = source_lang
+                    else:
+                        prompt = f"Identify original language, then translate strictly into 【{target_lang}】:\nFormat:\n【Detected Language】\n(Language)\n【Translation Result】\n(Result)\nText:\n{ocr_text}"
 
-【Detected Language】
-(Name of the original language from this list if possible: {', '.join(SUPPORTED_LANGUAGES)})
-
-【Translation Result】
-(Translated text in {target_lang})
-
-Text:
-{ocr_text}
-"""
                     response = generate_content_with_retry(prompt)
                     if response:
                         raw_resp = response.text
@@ -173,22 +149,18 @@ Text:
                         else:
                             translated_text = raw_resp
 
-                        if mode == 'text' and detected_lang:
-                            session['last_detected_lang'] = detected_lang
-
                 except Exception as e:
                     err_msg = str(e)
                     if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
-                        translated_text = "⚠️ Gemini APIの本日分の無料上限に達しました。時間を置いて試すか、APIキーを更新してください。"
+                        translated_text = "⚠️ Gemini APIの上限に達しました。時間をおいてお試しください。"
                     else:
                         translated_text = f"AI翻訳エラー: {e}"
-            else:
-                translated_text = "GEMINI_API_KEY が設定されていません。"
 
     return render_template('index.html', 
                            ocr_text=ocr_text, 
                            translated_text=translated_text,
                            detected_lang=detected_lang,
+                           source_lang=source_lang,
                            target_lang=target_lang,
                            ui=ui,
                            active_mode=active_mode)

@@ -1,61 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Target Language</title>
+    <title>言語を選択</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
 
-    <div class="max-w-md w-full bg-slate-800 rounded-2xl shadow-xl border border-slate-700 p-6 md:p-8 text-center">
+    <div class="max-w-md w-full bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 p-6 space-y-4">
         
-        <h1 class="text-2xl font-bold text-white mb-2">🌐 AI Multi-Translator</h1>
-        <p class="text-slate-400 text-sm mb-6">Select your target language to start</p>
-
-        <!-- リアルタイム検索バー (虫眼鏡アイコン付き) -->
-        <div class="relative mb-4">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
-                </svg>
-            </div>
-            <input type="text" id="languageSearch" oninput="filterLanguages()" 
-                   placeholder="Search language (e.g. Thai, Spanish)..." 
-                   class="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-900 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500 text-sm placeholder-slate-500 transition">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+            <h1 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-globe text-indigo-400"></i>
+                {% if lang_type == 'source' %}入力言語を選択{% else %}翻訳先言語を選択{% endif %}
+            </h1>
+            <a href="/" class="text-xs text-slate-400 hover:text-white underline">キャンセル</a>
         </div>
 
-        <!-- 言語選択フォーム -->
-        <form action="/set-language" method="POST">
-            <div id="languageList" class="max-h-60 overflow-y-auto space-y-2 mb-6 text-left pr-1">
-                {% for lang in languages %}
-                <label class="lang-item flex items-center justify-between p-3 rounded-xl bg-slate-700/50 hover:bg-slate-700 cursor-pointer border border-slate-700 transition">
-                    <span class="text-sm font-medium text-slate-200">{{ lang }}</span>
-                    <input type="radio" name="target_lang" value="{{ lang }}" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" {% if loop.first %}checked{% endif %}>
-                </label>
-                {% endfor %}
-            </div>
+        <!-- 検索バー -->
+        <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-sm"></i>
+            <input type="text" id="lang-search" onkeyup="filterLanguages()" placeholder="言語名を検索 (例: English, Spanish)..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 text-sm placeholder-slate-600">
+        </div>
 
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg transition">
-                Continue to Translator
+        <!-- 言語一覧リスト -->
+        <form action="/set-language" method="POST" class="space-y-2 max-h-80 overflow-y-auto pr-1" id="lang-list">
+            <input type="hidden" name="lang_type" value="{{ lang_type }}">
+            {% for lang in languages %}
+            <button type="submit" name="target_lang" value="{{ lang }}" class="lang-item w-full text-left p-3 rounded-xl bg-slate-800/60 hover:bg-indigo-600 hover:text-white transition text-sm font-semibold flex justify-between items-center border border-slate-700/50">
+                <span>{{ lang }}</span>
+                <i class="fa-solid fa-chevron-right text-xs opacity-50"></i>
             </button>
+            {% endfor %}
         </form>
 
     </div>
 
     <script>
         function filterLanguages() {
-            const input = document.getElementById('languageSearch').value.toLowerCase().trim();
+            const input = document.getElementById('lang-search').value.toLowerCase();
             const items = document.getElementsByClassName('lang-item');
-            
+
             for (let i = 0; i < items.length; i++) {
                 const text = items[i].innerText.toLowerCase();
                 if (text.includes(input)) {
-                    items[i].classList.remove('hidden');
-                    items[i].classList.add('flex');
+                    items[i].style.display = "flex";
                 } else {
-                    items[i].classList.remove('flex');
-                    items[i].classList.add('hidden');
+                    items[i].style.display = "none";
                 }
             }
         }
