@@ -1,13 +1,6 @@
-FROM python:3.10-slim
+FROM python:3.12-slim
 
-# Tesseract OCRと日本語・英語データのインストール
-RUN apt-get update && apt-get install -y \
-    tesseract-ocr \
-    tesseract-ocr-eng \
-    tesseract-ocr-jpn \
-    libtesseract-dev \
-    && rm -rf /var/lib/apt/lists/*
-
+ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 COPY requirements.txt .
@@ -15,4 +8,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "app.py"]
+# レート制限をメモリ上で行うためワーカーは1、並列はスレッドで処理
+CMD gunicorn -w 1 --threads 8 -b 0.0.0.0:${PORT:-5000} app:app

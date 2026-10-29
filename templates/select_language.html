@@ -1,40 +1,38 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="{{ 'ja' if ui.title.startswith('AI万能') else 'en' }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>言語を選択</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{{ ui.select_language }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4">
-
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center px-4">
     <div class="max-w-md w-full bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-2xl space-y-6">
         <div class="flex items-center justify-between border-b border-slate-800 pb-4">
             <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                <i class="fa-solid fa-globe text-indigo-400"></i> 言語を選択
+                <i class="fa-solid fa-globe text-indigo-400"></i> {{ ui.select_language }}
             </h2>
-            <a href="/" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full transition">
+            <a href="{{ url_for('index') }}" class="p-2 w-10 h-10 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full transition">
                 <i class="fa-solid fa-xmark"></i>
             </a>
         </div>
 
-        <form action="/set-language" method="POST" class="space-y-3">
+        <form action="{{ url_for('set_language') }}" method="POST" class="space-y-3">
             <input type="hidden" name="lang_type" value="{{ lang_type }}">
             <div class="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
                 {% for lang in languages %}
                 <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-950/60 hover:bg-indigo-950/40 border border-slate-800/80 cursor-pointer transition">
-                    <input type="radio" name="target_lang" value="{{ lang }}" class="accent-indigo-500" required>
-                    <span class="text-sm font-medium text-slate-200">{{ lang }}</span>
+                    <input type="radio" name="target_lang" value="{{ lang.name }}" class="accent-indigo-500" {% if lang.name == current %}checked{% endif %} required>
+                    <span class="text-sm font-medium text-slate-200">{{ lang.native }}</span>
                 </label>
                 {% endfor %}
             </div>
-
             <button type="submit" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-2xl shadow-lg transition">
-                確定する
+                {{ ui.confirm }}
             </button>
         </form>
     </div>
-
 </body>
 </html>

@@ -1,50 +1,8 @@
-body {
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    background-color: #f5f7fa;
-    color: #333;
-    margin: 0;
-    padding: 40px 20px;
-}
-
-.container {
-    max-width: 600px;
-    margin: 0 auto;
-    background: #fff;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-h1 {
-    text-align: center;
-    margin-bottom: 24px;
-}
-
-button {
-    width: 100%;
-    padding: 12px;
-    background-color: #0066cc;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    cursor: pointer;
-}
-
-.hidden {
-    display: none;
-}
-
-#loading {
-    text-align: center;
-    margin: 20px 0;
-    font-weight: bold;
-    color: #0066cc;
-}
-
-.result-box {
-    background: #f0f4f8;
-    padding: 15px;
-    border-radius: 6px;
-    margin-top: 15px;
-}
+/* Tailwind(CDN) を補う最小限のスタイル */
+html { -webkit-text-size-adjust: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Helvetica Neue", Arial, sans-serif; }
+.hidden { display: none !important; }
+/* iPhone のホームバー・ノッチ対策 */
+body { padding-bottom: max(1rem, env(safe-area-inset-bottom)); padding-top: max(1rem, env(safe-area-inset-top)); }
+/* iOS Safari は 16px 未満の入力欄でズームするため防ぐ */
+textarea, input { font-size: 16px; }

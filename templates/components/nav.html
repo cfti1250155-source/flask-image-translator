@@ -1,19 +1,9 @@
 <!-- 下部ナビゲーション -->
 <div class="grid grid-cols-4 gap-2 pt-5 border-t border-slate-800/80 mt-6">
-    <button onclick="switchTab('text')" id="nav-text" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
-        <i class="fa-solid fa-pen-to-square text-lg mb-1"></i>
-        <span class="text-[11px] font-medium">{{ ui.get('nav_text', 'Text') }}</span>
+    {% for tab, icon in [('text','fa-pen-to-square'),('image','fa-image'),('voice','fa-microphone'),('camera','fa-camera')] %}
+    <button type="button" onclick="switchTab('{{ tab }}')" id="nav-{{ tab }}" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
+        <i class="fa-solid {{ icon }} text-lg mb-1"></i>
+        <span class="text-[11px] font-medium">{{ ui['nav_' ~ tab] }}</span>
     </button>
-    <button onclick="switchTab('image')" id="nav-image" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
-        <i class="fa-solid fa-image text-lg mb-1"></i>
-        <span class="text-[11px] font-medium">{{ ui.get('nav_image', 'Image') }}</span>
-    </button>
-    <button onclick="switchTab('voice')" id="nav-voice" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
-        <i class="fa-solid fa-microphone text-lg mb-1"></i>
-        <span class="text-[11px] font-medium">{{ ui.get('nav_voice', 'Voice') }}</span>
-    </button>
-    <button onclick="switchTab('camera')" id="nav-camera" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
-        <i class="fa-solid fa-camera text-lg mb-1"></i>
-        <span class="text-[11px] font-medium">{{ ui.get('nav_camera', 'Camera') }}</span>
-    </button>
+    {% endfor %}
 </div>

@@ -1,0 +1,24 @@
+{% macro result_box(mode, show_original=false, left=false) %}
+{% if translated_text and active_mode == mode %}
+<div class="mt-4 p-5 bg-indigo-950/40 rounded-2xl border border-indigo-800/60 space-y-3 {{ 'text-left' if left }}">
+    <div class="flex justify-between items-center border-b border-indigo-900/50 pb-2">
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">{{ ui.result_label }} ({{ target_lang }})</span>
+            {% if detected_lang %}
+            <span class="bg-emerald-950/80 text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-800">🌐 {{ detected_lang }}</span>
+            {% endif %}
+        </div>
+        <button type="button" onclick="copyResult('resultText-{{ mode }}', this)" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+            <i class="fa-solid fa-copy"></i>
+        </button>
+    </div>
+    <div id="resultText-{{ mode }}" class="text-indigo-100 text-base font-medium whitespace-pre-wrap leading-relaxed">{{ translated_text }}</div>
+    {% if show_original and original_text %}
+    <details class="text-xs text-slate-400">
+        <summary class="cursor-pointer">{{ ui.original_label }}</summary>
+        <div class="mt-2 whitespace-pre-wrap">{{ original_text }}</div>
+    </details>
+    {% endif %}
+</div>
+{% endif %}
+{% endmacro %}
