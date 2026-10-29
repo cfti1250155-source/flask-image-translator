@@ -1,18 +1,19 @@
-<!-- ヘッダー & アプリ言語切替 -->
+<!-- ヘッダー & アプリ言語切替（翻訳先言語と連動） -->
 <div class="flex items-center justify-between mb-4 mt-2">
     <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
         <i class="fa-solid fa-language text-indigo-400"></i> {{ ui.get('title', 'AI Multi-Translator') }}
     </h1>
-    <a href="/select-language?type=source" title="アプリの言語を変更" class="text-xs bg-slate-800/90 hover:bg-slate-700 text-indigo-300 hover:text-white px-3.5 py-1.5 rounded-full border border-slate-700 transition flex items-center gap-1.5 font-semibold shadow-sm">
-        <i class="fa-solid fa-globe text-indigo-400 text-xs"></i> {{ source_lang }}
+    <!-- 右上の地球マークを「翻訳先（target_lang）」基準に変更 -->
+    <a href="/select-language?type=target" title="翻訳先言語を変更" class="text-xs bg-slate-800/90 hover:bg-slate-700 text-indigo-300 hover:text-white px-3.5 py-1.5 rounded-full border border-slate-700 transition flex items-center gap-1.5 font-semibold shadow-sm">
+        <i class="fa-solid fa-globe text-indigo-400 text-xs"></i> {{ target_lang }}
     </a>
 </div>
 
-<!-- 言語選択バー（モードに応じてスッキリ可変） -->
+<!-- 言語選択バー -->
 <div id="language-bar-wrapper" class="mb-6 w-full">
     <div id="language-bar" class="flex items-end justify-between gap-2 w-full">
         
-        <!-- 翻訳元（テキストモード以外では非表示） -->
+        <!-- 翻訳元 -->
         <div id="source-lang-container" class="flex-1 min-w-0">
             <span class="text-[11px] text-slate-400 block mb-1 font-semibold text-center truncate">翻訳元</span>
             <a href="/select-language?type=source" class="block w-full bg-slate-800/80 hover:bg-slate-700 text-white px-3 py-2.5 rounded-xl border border-slate-700 transition text-center font-medium shadow-sm text-sm truncate">
@@ -20,14 +21,14 @@
             </a>
         </div>
         
-        <!-- 入れ替えボタン（テキストモード以外では非表示） -->
+        <!-- 入れ替えボタン -->
         <div id="swap-lang-container" class="flex-shrink-0">
             <a href="/swap-language" class="w-10 h-10 flex items-center justify-center bg-slate-800/80 hover:bg-slate-700 text-indigo-400 hover:text-indigo-300 rounded-full border border-slate-700 transition shadow-sm hover:shadow-md">
                 <i class="fa-solid fa-arrow-right-arrow-left text-xs"></i>
             </a>
         </div>
         
-        <!-- 翻訳先（常に表示・他モード時はド真ん中に自動拡大） -->
+        <!-- 翻訳先 -->
         <div id="target-lang-container" class="flex-1 min-w-0 transition-all duration-300">
             <span id="target-lang-label" class="text-[11px] text-indigo-400 block mb-1 font-semibold text-center truncate">翻訳先</span>
             <a href="/select-language?type=target" class="block w-full bg-slate-800/80 hover:bg-slate-700 text-white px-3 py-2.5 rounded-xl border border-slate-700 transition text-center font-medium shadow-sm text-sm truncate">
