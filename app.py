@@ -1,10 +1,9 @@
 import os
 from flask import Flask, render_template, request, session, redirect, url_for
-# 作成した languages.py から読み込み
 from languages import SUPPORTED_LANGUAGES, get_ui_labels
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "your-secret-key")
+app.secret_key = os.environ.get("SECRET_KEY", "your-secret-key-12345")
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -16,7 +15,7 @@ def index():
     source_lang = session.get('source_lang', 'Japanese')
     target_lang = session.get('target_lang', 'English')
     
-    # UIの表記は「翻訳先言語（target_lang）」を基準に取得
+    # UIの表示文字は翻訳先（target_lang）を基準に取得
     ui = get_ui_labels(target_lang)
 
     active_mode = 'text'
@@ -25,7 +24,7 @@ def index():
 
     if request.method == 'POST':
         active_mode = request.form.get('mode', 'text')
-        # ※ここに既存の翻訳ロジック（テキスト・画像・音声・カメラ処理）が入ります
+        # ※ここにGemini APIやOCR（Pytesseract）等の翻訳ロジックが入ります
 
     return render_template('index.html', 
                            source_lang=source_lang, 

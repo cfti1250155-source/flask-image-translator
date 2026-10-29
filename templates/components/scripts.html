@@ -1,5 +1,4 @@
 <script>
-    // 1. 各機能（タブ）の画面切り替え
     function switchTab(tabName) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
         const targetTab = document.getElementById('tab-' + tabName);
@@ -34,17 +33,15 @@
         }
     }
 
-    // ページ開いた時の初期実行
     switchTab("{{ active_mode or 'text' }}");
 
-    // 3. 音声認識処理
     let recognition = null;
     let isRecording = false;
 
     function toggleVoiceRecording() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            alert('お使いのブラウザは音声認識に対応していません。');
+            alert('音声認識がブラウザでサポートされていません');
             return;
         }
 
@@ -58,7 +55,7 @@
                 const micIcon = document.getElementById('mic-icon');
                 if (micIcon) micIcon.className = 'fa-solid fa-square text-red-400 animate-pulse';
                 const status = document.getElementById('voice-status');
-                if (status) status.innerText = '音声を入力中...';
+                if (status) status.innerText = '音声入力中...';
             };
 
             recognition.onresult = (event) => {
@@ -88,7 +85,6 @@
         }
     }
 
-    // 4. カメラ起動・撮影処理
     let videoStream = null;
 
     async function startCamera() {
@@ -123,7 +119,6 @@
         if (camForm) camForm.submit();
     }
 
-    // 5. クリップボードコピー
     function copyResult(elementId) {
         const targetEl = document.getElementById(elementId);
         if (!targetEl) return;

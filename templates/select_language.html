@@ -7,51 +7,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="max-w-md w-full bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 p-6 space-y-4">
-        
-        <div class="flex justify-between items-center pb-2 border-b border-slate-800">
-            <h1 class="text-lg font-bold text-white flex items-center gap-2">
-                <i class="fa-solid fa-globe text-indigo-400"></i>
-                {% if lang_type == 'source' %}入力言語を選択{% else %}翻訳先言語を選択{% endif %}
-            </h1>
-            <a href="/" class="text-xs text-slate-400 hover:text-white underline">キャンセル</a>
+    <div class="max-w-md w-full bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-2xl space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-globe text-indigo-400"></i> 言語を選択
+            </h2>
+            <a href="/" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full transition">
+                <i class="fa-solid fa-xmark"></i>
+            </a>
         </div>
 
-        <!-- 検索バー -->
-        <div class="relative">
-            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-sm"></i>
-            <input type="text" id="lang-search" onkeyup="filterLanguages()" placeholder="言語名を検索 (例: English, Spanish)..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 text-sm placeholder-slate-600">
-        </div>
-
-        <!-- 言語一覧リスト -->
-        <form action="/set-language" method="POST" class="space-y-2 max-h-80 overflow-y-auto pr-1" id="lang-list">
+        <form action="/set-language" method="POST" class="space-y-3">
             <input type="hidden" name="lang_type" value="{{ lang_type }}">
-            {% for lang in languages %}
-            <button type="submit" name="target_lang" value="{{ lang }}" class="lang-item w-full text-left p-3 rounded-xl bg-slate-800/60 hover:bg-indigo-600 hover:text-white transition text-sm font-semibold flex justify-between items-center border border-slate-700/50">
-                <span>{{ lang }}</span>
-                <i class="fa-solid fa-chevron-right text-xs opacity-50"></i>
-            </button>
-            {% endfor %}
-        </form>
+            <div class="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
+                {% for lang in languages %}
+                <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-950/60 hover:bg-indigo-950/40 border border-slate-800/80 cursor-pointer transition">
+                    <input type="radio" name="target_lang" value="{{ lang }}" class="accent-indigo-500" required>
+                    <span class="text-sm font-medium text-slate-200">{{ lang }}</span>
+                </label>
+                {% endfor %}
+            </div>
 
+            <button type="submit" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-2xl shadow-lg transition">
+                確定する
+            </button>
+        </form>
     </div>
 
-    <script>
-        function filterLanguages() {
-            const input = document.getElementById('lang-search').value.toLowerCase();
-            const items = document.getElementsByClassName('lang-item');
-
-            for (let i = 0; i < items.length; i++) {
-                const text = items[i].innerText.toLowerCase();
-                if (text.includes(input)) {
-                    items[i].style.display = "flex";
-                } else {
-                    items[i].style.display = "none";
-                }
-            }
-        }
-    </script>
 </body>
 </html>

@@ -1,9 +1,8 @@
-<!-- ヘッダー & アプリ言語切替（翻訳先言語と連動） -->
+<!-- ヘッダー & アプリ言語切替 -->
 <div class="flex items-center justify-between mb-4 mt-2">
     <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
         <i class="fa-solid fa-language text-indigo-400"></i> {{ ui.get('title', 'AI Multi-Translator') }}
     </h1>
-    <!-- 右上の地球マークを「翻訳先（target_lang）」基準に変更 -->
     <a href="/select-language?type=target" title="翻訳先言語を変更" class="text-xs bg-slate-800/90 hover:bg-slate-700 text-indigo-300 hover:text-white px-3.5 py-1.5 rounded-full border border-slate-700 transition flex items-center gap-1.5 font-semibold shadow-sm">
         <i class="fa-solid fa-globe text-indigo-400 text-xs"></i> {{ target_lang }}
     </a>

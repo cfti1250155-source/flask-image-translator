@@ -1,29 +1,41 @@
+<!-- 1. テキスト翻訳モード -->
+<div id="tab-text" class="tab-content space-y-4">
+    <form action="/" method="POST" class="space-y-3">
+        <input type="hidden" name="mode" value="text">
+        <textarea name="direct_text" rows="5" class="w-full p-4 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 text-base placeholder-slate-600 resize-none shadow-inner" placeholder="{{ ui.get('text_placeholder', 'Enter text...') }}"></textarea>
+        <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold py-3 px-4 rounded-2xl shadow-lg transition active:scale-[0.99] flex items-center justify-center gap-2">
+            <i class="fa-solid fa-paper-plane"></i> {{ ui.get('btn_text_translate', 'Translate') }}
+        </button>
+    </form>
+
+    {% if translated_text and active_mode == 'text' %}
+    <div class="mt-4 p-5 bg-indigo-950/40 rounded-2xl border border-indigo-800/60 space-y-3">
+        <div class="flex justify-between items-center border-b border-indigo-900/50 pb-2">
+            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">{{ ui.get('result_label', 'Result') }} ({{ target_lang }})</span>
+            <button type="button" onclick="copyResult('resultText-text')" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                <i class="fa-solid fa-copy"></i>
+            </button>
+        </div>
+        <div id="resultText-text" class="text-indigo-100 text-base font-medium whitespace-pre-wrap leading-relaxed">{{ translated_text }}</div>
+    </div>
+    {% endif %}
+</div>
+
 <!-- 2. 画像翻訳モード -->
 <div id="tab-image" class="tab-content hidden space-y-4">
     <form action="/" method="POST" enctype="multipart/form-data" class="space-y-4">
         <input type="hidden" name="mode" value="image">
         <div class="flex flex-col items-center justify-center w-full">
-            
-            <!-- ドラッグ＆ドロップ兼ファイル選択エリア -->
-            <label id="image-drop-area" class="relative flex flex-col items-center justify-center w-full min-h-[160px] border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/40 hover:bg-slate-800/40 transition overflow-hidden p-4">
-                
-                <!-- 未選択時のメッセージ -->
-                <div id="upload-placeholder" class="flex flex-col items-center justify-center text-center">
+            <label class="flex flex-col items-center justify-center w-full h-40 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/40 hover:bg-slate-800/40 transition">
+                <div class="flex flex-col items-center justify-center p-4 text-center">
                     <i class="fa-solid fa-image text-3xl text-indigo-400 mb-2"></i>
-                    <p class="text-sm text-slate-300 font-medium">{{ ui.get('image_input_label', 'Click or drag image here') }}</p>
+                    <p class="text-sm text-slate-300 font-medium">{{ ui.get('image_input_label', 'Click to select image') }}</p>
                     <p class="text-xs text-slate-500 mt-1">PNG, JPG, WEBP</p>
                 </div>
-
-                <!-- 選択した画像のプレビュー表示枠（初期状態は非表示） -->
-                <img id="image-preview" class="hidden max-h-52 rounded-xl object-contain w-full" alt="Preview">
-
-                <!-- 実際のファイル入力 -->
-                <input type="file" id="image-file-input" name="image" accept="image/*" class="hidden">
+                <input type="file" name="image" accept="image/*" class="hidden" onchange="document.getElementById('img-file-name').innerText = this.files[0].name">
             </label>
-
             <p id="img-file-name" class="text-xs text-indigo-400 mt-2 h-4 font-medium"></p>
         </div>
-
         <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold py-3 px-4 rounded-2xl shadow-lg transition active:scale-[0.99] flex items-center justify-center gap-2">
             <i class="fa-solid fa-file-invoice"></i> {{ ui.get('btn_image_translate', 'Translate Image') }}
         </button>
@@ -45,6 +57,74 @@
             </button>
         </div>
         <div id="resultText-image" class="text-indigo-100 text-base font-medium whitespace-pre-wrap leading-relaxed">{{ translated_text }}</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 3. 音声翻訳モード -->
+<div id="tab-voice" class="tab-content hidden space-y-4 text-center py-2">
+    <div class="space-y-3">
+        <button id="start-record-btn" type="button" onclick="toggleVoiceRecording()" class="w-20 h-20 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white rounded-full flex items-center justify-center mx-auto text-3xl border-4 border-indigo-400/40 shadow-xl transition">
+            <i id="mic-icon" class="fa-solid fa-microphone"></i>
+        </button>
+        <p id="voice-status" class="text-xs text-slate-400 font-medium">{{ ui.get('voice_instruction', 'Press the mic button and speak') }}</p>
+    </div>
+
+    <form id="voice-form" action="/" method="POST" class="space-y-3 hidden">
+        <input type="hidden" name="mode" value="voice">
+        <textarea id="voice_text" name="voice_text" rows="3" class="w-full p-3 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800 text-sm" placeholder="{{ ui.get('voice_placeholder', 'Recognized speech...') }}"></textarea>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-2xl shadow-lg transition text-sm">
+            {{ ui.get('btn_voice_translate', 'Translate Voice') }}
+        </button>
+    </form>
+
+    {% if translated_text and active_mode == 'voice' %}
+    <div class="mt-4 p-5 bg-indigo-950/40 rounded-2xl border border-indigo-800/60 space-y-3 text-left">
+        <div class="flex justify-between items-center border-b border-indigo-900/50 pb-2">
+            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">{{ ui.get('result_label', 'Result') }}</span>
+            <button type="button" onclick="copyResult('resultText-voice')" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                <i class="fa-solid fa-copy"></i>
+            </button>
+        </div>
+        <div id="resultText-voice" class="text-indigo-100 text-base font-medium whitespace-pre-wrap leading-relaxed">{{ translated_text }}</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 4. カメラ翻訳モード -->
+<div id="tab-camera" class="tab-content hidden space-y-4 text-center">
+    <div class="relative w-full rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 aspect-video flex items-center justify-center">
+        <video id="camera-video" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+        <canvas id="camera-canvas" class="hidden"></canvas>
+        <div id="camera-placeholder" class="p-6 text-slate-500 text-xs">
+            <i class="fa-solid fa-camera text-3xl text-slate-600 block mb-2"></i>
+            {{ ui.get('camera_instruction', 'Press "Start Camera" to capture') }}
+        </div>
+    </div>
+
+    <form id="camera-form" action="/" method="POST" class="space-y-3">
+        <input type="hidden" name="mode" value="camera">
+        <input type="hidden" id="camera_data" name="camera_data" value="">
+        
+        <div class="flex gap-2">
+            <button type="button" onclick="startCamera()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 px-3 rounded-2xl text-xs transition border border-slate-700 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-camera"></i> {{ ui.get('btn_camera_start', 'Start Camera') }}
+            </button>
+            <button type="button" onclick="captureCamera()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-3 rounded-2xl text-xs transition shadow-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-bolt"></i> {{ ui.get('btn_camera_capture', 'Capture & Translate') }}
+            </button>
+        </div>
+    </form>
+
+    {% if translated_text and active_mode == 'camera' %}
+    <div class="mt-4 p-5 bg-indigo-950/40 rounded-2xl border border-indigo-800/60 space-y-3 text-left">
+        <div class="flex justify-between items-center border-b border-indigo-900/50 pb-2">
+            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">{{ ui.get('result_label', 'Result') }}</span>
+            <button type="button" onclick="copyResult('resultText-camera')" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                <i class="fa-solid fa-copy"></i>
+            </button>
+        </div>
+        <div id="resultText-camera" class="text-indigo-100 text-base font-medium whitespace-pre-wrap leading-relaxed">{{ translated_text }}</div>
     </div>
     {% endif %}
 </div>
