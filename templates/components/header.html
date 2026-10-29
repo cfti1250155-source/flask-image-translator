@@ -1,4 +1,4 @@
-<!-- ヘッダー & 地球マーク -->
+<!-- ヘッダー & アプリ言語切替 -->
 <div class="flex items-center justify-between mb-4 mt-2">
     <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
         <i class="fa-solid fa-language text-indigo-400"></i> {{ ui.get('title', 'AI Multi-Translator') }}
@@ -8,47 +8,32 @@
     </a>
 </div>
 
-<!-- 言語選択バー -->
-<div class="flex items-center justify-between gap-3 mb-6 transition-all duration-300">
-    <!-- 翻訳元 -->
-    <div id="source-lang-container" class="flex-1">
-        <span class="text-[11px] text-slate-400 block mb-1 font-semibold text-center">翻訳元</span>
-        <a href="/select-language?type=source" class="block w-full bg-slate-800/80 hover:bg-slate-700 text-white px-3 py-2.5 rounded-xl border border-slate-700 transition text-center font-medium shadow-sm text-sm">
-            {{ source_lang }}
-        </a>
-    </div>
-    
-    <!-- 入れ替えボタン -->
-    <div class="flex flex-col items-center justify-end pb-0.5">
-        <button id="swap-lang-btn" onclick="window.location.href='/swap-language'" class="w-9 h-9 flex items-center justify-center bg-slate-800/80 hover:bg-slate-700 text-indigo-400 rounded-full border border-slate-700 transition shadow-sm hover:shadow-md mt-4">
-            <i class="fa-solid fa-arrow-right-arrow-left text-xs"></i>
-        </button>
-    </div>
-    
-    <!-- 翻訳先 -->
-    <div id="target-lang-container" class="flex-1 transition-all duration-300">
-        <span class="text-[11px] text-indigo-400 block mb-1 font-semibold text-center">翻訳先</span>
-        <a href="/select-language?type=target" class="block w-full bg-slate-800/80 hover:bg-slate-700 text-white px-3 py-2.5 rounded-xl border border-slate-700 transition text-center font-medium shadow-sm text-sm">
-            {{ target_lang }}
-        </a>
-    </div>
-</div>
+<!-- 言語選択バー（モードに応じてスッキリ可変） -->
+<div id="language-bar-wrapper" class="mb-6 w-full">
+    <div id="language-bar" class="flex items-end justify-between gap-2 w-full">
+        
+        <!-- 翻訳元（テキストモード以外では非表示） -->
+        <div id="source-lang-container" class="flex-1 min-w-0">
+            <span class="text-[11px] text-slate-400 block mb-1 font-semibold text-center truncate">翻訳元</span>
+            <a href="/select-language?type=source" class="block w-full bg-slate-800/80 hover:bg-slate-700 text-white px-3 py-2.5 rounded-xl border border-slate-700 transition text-center font-medium shadow-sm text-sm truncate">
+                {{ source_lang }}
+            </a>
+        </div>
+        
+        <!-- 入れ替えボタン（テキストモード以外では非表示） -->
+        <div id="swap-lang-container" class="flex-shrink-0">
+            <a href="/swap-language" class="w-10 h-10 flex items-center justify-center bg-slate-800/80 hover:bg-slate-700 text-indigo-400 hover:text-indigo-300 rounded-full border border-slate-700 transition shadow-sm hover:shadow-md">
+                <i class="fa-solid fa-arrow-right-arrow-left text-xs"></i>
+            </a>
+        </div>
+        
+        <!-- 翻訳先（常に表示・他モード時はド真ん中に自動拡大） -->
+        <div id="target-lang-container" class="flex-1 min-w-0 transition-all duration-300">
+            <span id="target-lang-label" class="text-[11px] text-indigo-400 block mb-1 font-semibold text-center truncate">翻訳先</span>
+            <a href="/select-language?type=target" class="block w-full bg-slate-800/80 hover:bg-slate-700 text-white px-3 py-2.5 rounded-xl border border-slate-700 transition text-center font-medium shadow-sm text-sm truncate">
+                {{ target_lang }}
+            </a>
+        </div>
 
-<!-- 言語選択バー -->
-<div class="flex items-center justify-between gap-4 mb-6 transition-all duration-300">
-    <div id="source-lang-container" class="flex-1">
-        <a href="/select-language?type=source" class="block w-full bg-slate-800/80 hover:bg-slate-700 text-white px-4 py-3 rounded-xl border border-slate-700 transition text-center font-medium shadow-sm">
-            {{ source_lang }}
-        </a>
-    </div>
-    
-    <button id="swap-lang-btn" onclick="window.location.href='/swap-language'" class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-slate-800/80 hover:bg-slate-700 text-indigo-400 rounded-full border border-slate-700 transition shadow-sm hover:shadow-md">
-        <i class="fa-solid fa-sync-alt"></i>
-    </button>
-    
-    <div id="target-lang-container" class="flex-1 transition-all duration-300">
-        <a href="/select-language?type=target" class="block w-full bg-slate-800/80 hover:bg-slate-700 text-white px-4 py-3 rounded-xl border border-slate-700 transition text-center font-medium shadow-sm">
-            {{ target_lang }}
-        </a>
     </div>
 </div>

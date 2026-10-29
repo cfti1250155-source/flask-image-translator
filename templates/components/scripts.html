@@ -1,9 +1,11 @@
 <script>
     function switchTab(tabName) {
+        // 1. 各機能（タブ）の画面切り替え
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
         const targetTab = document.getElementById('tab-' + tabName);
         if (targetTab) targetTab.classList.remove('hidden');
 
+        // 2. 下部ナビボタンのハイライト切り替え
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.classList.remove('text-indigo-400', 'bg-indigo-950/40');
             btn.classList.add('text-slate-400');
@@ -15,37 +17,42 @@
             activeBtn.classList.add('text-indigo-400', 'bg-indigo-950/40');
         }
 
-        const sourceLang = document.getElementById('source-lang-container');
-        const swapBtn = document.getElementById('swap-lang-btn');
-        const targetLang = document.getElementById('target-lang-container');
+        // 3. 言語選択バーの最適化切り替え
+        const sourceContainer = document.getElementById('source-lang-container');
+        const swapContainer = document.getElementById('swap-lang-container');
+        const targetContainer = document.getElementById('target-lang-container');
+        const targetLabel = document.getElementById('target-lang-label');
 
         if (tabName === 'text') {
-            if (sourceLang) sourceLang.style.display = 'block';
-            if (swapBtn) swapBtn.style.display = 'flex';
-            if (targetLang) {
-                targetLang.style.width = '';
-                targetLang.style.margin = '';
+            // テキストモード： 翻訳元 ⇄ 翻訳先 を横並び表示
+            if (sourceContainer) sourceContainer.classList.remove('hidden');
+            if (swapContainer) swapContainer.classList.remove('hidden');
+            if (targetContainer) {
+                targetContainer.classList.remove('max-w-xs', 'mx-auto');
             }
+            if (targetLabel) targetLabel.textContent = '翻訳先';
         } else {
-            if (sourceLang) sourceLang.style.display = 'none';
-            if (swapBtn) swapBtn.style.display = 'none';
-            if (targetLang) {
-                targetLang.style.width = '100%';
-                targetLang.style.maxWidth = '250px';
-                targetLang.style.margin = '0 auto';
+            // 画像・音声・カメラモード： 翻訳先言語だけを中央にすっきり表示
+            if (sourceContainer) sourceContainer.classList.add('hidden');
+            if (swapContainer) swapContainer.classList.add('hidden');
+            if (targetContainer) {
+                targetContainer.classList.add('max-w-xs', 'mx-auto');
             }
+            if (targetLabel) targetLabel.textContent = '翻訳先言語';
         }
     }
 
-    switchTab("{{ active_mode }}");
+    // ページ開いた時の初期実行
+    switchTab("{{ active_mode or 'text' }}");
 
+    // 音声認識処理
     let recognition = null;
     let isRecording = false;
 
     function toggleVoiceRecording() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            alert('Speech recognition is not supported in this browser.');
+            alert('お使いのブラウザは音声認識に対応していません。');
             return;
         }
 
@@ -56,8 +63,10 @@
 
             recognition.onstart = () => {
                 isRecording = true;
-                document.getElementById('mic-icon').className = 'fa-solid fa-square text-red-400 animate-pulse';
-                document.getElementById('voice-status').innerText = '...';
+                const micIcon = document.getElementById('mic-icon');
+                if (micIcon) micIcon.className = 'fa-solid fa-square text-red-400 animate-pulse';
+                const status = document.getElementById('voice-status');
+                if (status) status.innerText = '音声を入力中...';
             };
 
             recognition.onresult = (event) => {
@@ -65,14 +74,18 @@
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     transcript += event.results[i][0].transcript;
                 }
-                document.getElementById('voice_text').value = transcript;
-                document.getElementById('voice-form').classList.remove('hidden');
+                const vText = document.getElementById('voice_text');
+                if (vText) vText.value = transcript;
+                const vForm = document.getElementById('voice-form');
+                if (vForm) vForm.classList.remove('hidden');
             };
 
             recognition.onend = () => {
                 isRecording = false;
-                document.getElementById('mic-icon').className = 'fa-solid fa-microphone';
-                document.getElementById('voice-form').submit();
+                const micIcon = document.getElementById('mic-icon');
+                if (micIcon) micIcon.className = 'fa-solid fa-microphone';
+                const vForm = document.getElementById('voice-form');
+                if (vForm) vForm.submit();
             };
         }
 
@@ -83,18 +96,20 @@
         }
     }
 
+    // カメラ起動・撮影処理
     let videoStream = null;
 
     async function startCamera() {
         try {
             const video = document.getElementById('camera-video');
-            document.getElementById('camera-placeholder').classList.add('hidden');
-            video.classList.remove('hidden');
+            const placeholder = document.getElementById('camera-placeholder');
+            if (placeholder) placeholder.classList.add('hidden');
+            if (video) video.classList.remove('hidden');
 
             videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            video.srcObject = videoStream;
+            if (video) video.srcObject = videoStream;
         } catch (err) {
-            alert('Camera error: ' + err.message);
+            alert('カメラ起動エラー: ' + err.message);
         }
     }
 
@@ -102,7 +117,7 @@
         const video = document.getElementById('camera-video');
         const canvas = document.getElementById('camera-canvas');
         
-        if (!video.srcObject) return;
+        if (!video || !video.srcObject) return;
 
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -110,10 +125,13 @@
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
         const dataUrl = canvas.toDataURL('image/jpeg');
-        document.getElementById('camera_data').value = dataUrl;
-        document.getElementById('camera-form').submit();
+        const camData = document.getElementById('camera_data');
+        if (camData) camData.value = dataUrl;
+        const camForm = document.getElementById('camera-form');
+        if (camForm) camForm.submit();
     }
 
+    // クリップボードコピー
     function copyResult(elementId) {
         const targetEl = document.getElementById(elementId);
         if (!targetEl) return;

@@ -135,14 +135,15 @@ def set_language():
         
     return redirect(url_for('index'))
 
-@app.route('/swap-language', methods=['POST'])
+@app.route('/swap-language', methods=['GET', 'POST'])
 def swap_language():
-    source_lang = session.get('source_lang', 'Japanese')
-    target_lang = session.get('target_lang', 'English')
-
-    session['source_lang'] = target_lang
-    session['target_lang'] = source_lang
-    return redirect(url_for('index'))
+    # 翻訳元と翻訳先を安全に入れ替え
+    source = session.get('source_lang', 'Japanese')
+    target = session.get('target_lang', 'English')
+    session['source_lang'] = target
+    session['target_lang'] = source
+    # 直前のページ（テキストタブ）へ戻る
+    return redirect(request.referrer or url_for('index'))
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
