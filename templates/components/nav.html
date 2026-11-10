@@ -1,9 +1,9 @@
 <!-- 下部ナビゲーション -->
-<div class="grid grid-cols-4 gap-2 pt-5 border-t border-slate-800/80 mt-6">
-    {% for tab, icon in [('text','fa-pen-to-square'),('image','fa-image'),('voice','fa-microphone'),('camera','fa-camera')] %}
-    <button type="button" onclick="switchTab('{{ tab }}')" id="nav-{{ tab }}" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition">
-        <i class="fa-solid {{ icon }} text-lg mb-1"></i>
-        <span class="text-[11px] font-medium">{{ ui['nav_' ~ tab] }}</span>
+<div class="grid grid-cols-6 gap-1 pt-5 border-t border-slate-800/80 mt-6">
+    {% for tab, icon in [('text','fa-pen-to-square'),('image','fa-image'),('voice','fa-microphone'),('camera','fa-camera'),('conversation','fa-comments'),('history','fa-clock-rotate-left')] %}
+    <button type="button" onclick="switchTab('{{ tab }}')" id="nav-{{ tab }}" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl transition min-w-0">
+        <i class="fa-solid {{ icon }} text-base mb-1"></i>
+        <span class="text-[10px] font-medium truncate max-w-full">{{ ui['nav_' ~ tab] }}</span>
     </button>
     {% endfor %}
 </div>

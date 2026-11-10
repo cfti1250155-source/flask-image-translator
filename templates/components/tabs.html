@@ -4,7 +4,8 @@
 <div id="tab-text" class="tab-content space-y-4">
     <form action="/" method="POST" class="tx-form space-y-3">
         <input type="hidden" name="mode" value="text">
-        <textarea name="direct_text" rows="5" maxlength="5000" class="w-full p-4 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-600 resize-none shadow-inner" placeholder="{{ ui.text_placeholder }}">{{ input_text if active_mode == 'text' else '' }}</textarea>
+        <input type="hidden" name="glossary" value="[]">
+        <textarea name="direct_text" dir="auto" rows="5" maxlength="5000" class="w-full p-4 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-600 resize-none shadow-inner" placeholder="{{ ui.text_placeholder }}">{{ input_text if active_mode == 'text' else '' }}</textarea>
         <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold py-3 px-4 rounded-2xl shadow-lg transition active:scale-[0.99] flex items-center justify-center gap-2">
             <i class="fa-solid fa-paper-plane"></i> <span class="btn-label">{{ ui.btn_text_translate }}</span>
         </button>
@@ -45,7 +46,8 @@
 
     <form id="voice-form" action="/" method="POST" class="tx-form space-y-3 {{ '' if (active_mode == 'voice' and input_text) else 'hidden' }}">
         <input type="hidden" name="mode" value="voice">
-        <textarea id="voice_text" name="voice_text" rows="3" maxlength="5000" class="w-full p-3 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800" placeholder="{{ ui.voice_placeholder }}">{{ input_text if active_mode == 'voice' else '' }}</textarea>
+        <input type="hidden" name="glossary" value="[]">
+        <textarea id="voice_text" name="voice_text" dir="auto" rows="3" maxlength="5000" class="w-full p-3 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800" placeholder="{{ ui.voice_placeholder }}">{{ input_text if active_mode == 'voice' else '' }}</textarea>
         <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-2xl shadow-lg transition text-sm">
             <span class="btn-label">{{ ui.btn_voice_translate }}</span>
         </button>
@@ -77,4 +79,82 @@
         </div>
     </form>
     {{ result_box('camera', show_original=true, left=true) }}
+</div>
+
+
+<!-- 5. チャット（1台のスマホを渡し合う DM 形式。自分の言語の原文と相手の言語の訳を両方表示） -->
+<div id="tab-conversation" class="tab-content hidden space-y-3">
+    <p class="text-xs text-slate-400 text-center">{{ ui.conv_hint }}</p>
+
+    <!-- 話者カード: タップで話者を切り替え。言語はそれぞれ選択 -->
+    <div class="grid grid-cols-2 gap-2">
+        {% for side, label in [('A', ui.conv_person_a), ('B', ui.conv_person_b)] %}
+        <div id="chat-card-{{ side }}" onclick="setSpeaker('{{ side }}')" role="button" tabindex="0"
+             class="chat-card rounded-2xl p-2.5 border-2 border-slate-800 bg-slate-950/50 cursor-pointer transition min-w-0 space-y-1.5">
+            <span class="text-[11px] font-semibold {{ 'text-indigo-400' if side == 'A' else 'text-emerald-400' }}">{{ label }}</span>
+            <select id="conv-lang-{{ side }}" aria-label="{{ label }}" onclick="event.stopPropagation()"
+                    class="w-full bg-slate-800 text-slate-100 text-sm rounded-xl px-2 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500"></select>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="conv-log" class="space-y-2 max-h-72 overflow-y-auto"></div>
+    <p id="conv-empty" class="text-center text-xs text-slate-600 py-3">{{ ui.conv_empty }}</p>
+    <p id="conv-status" class="text-xs text-slate-400 text-center min-h-[1rem]"></p>
+
+    <form onsubmit="return convSend(event)" class="flex gap-1.5 items-center">
+        <button type="button" id="conv-mic" onclick="convListen()" aria-label="mic"
+                class="w-11 h-11 flex-shrink-0 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full flex items-center justify-center transition">
+            <i class="fa-solid fa-microphone"></i>
+        </button>
+        <input id="conv-input" type="text" dir="auto" maxlength="1000" autocomplete="off" placeholder="{{ ui.chat_input_placeholder }}"
+               class="min-w-0 flex-1 px-3 py-2.5 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-600">
+        <button type="submit" id="conv-send" aria-label="send"
+                class="w-11 h-11 flex-shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full flex items-center justify-center transition">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
+    </form>
+
+    <div class="space-y-1.5 text-xs text-slate-300">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="conv-auto-speak" class="accent-indigo-500"> {{ ui.conv_auto_speak }}</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="conv-auto-switch" checked class="accent-indigo-500"> {{ ui.chat_auto_switch }}</label>
+    </div>
+    <button type="button" onclick="clearConversation()" class="w-full text-xs text-slate-400 hover:text-slate-200 py-2">
+        <i class="fa-solid fa-eraser"></i> {{ ui.conv_clear }}
+    </button>
+</div>
+
+<!-- 6. 履歴・お気に入り・用語集（この端末の localStorage に保存） -->
+<div id="tab-history" class="tab-content hidden space-y-3">
+    <div class="flex items-center justify-between gap-2">
+        <div class="flex gap-1 flex-wrap">
+            <button type="button" id="hf-all" onclick="setHistFilter('all')" class="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition">{{ ui.filter_all }}</button>
+            <button type="button" id="hf-fav" onclick="setHistFilter('fav')" class="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition"><i class="fa-solid fa-star text-yellow-400"></i> {{ ui.filter_fav }}</button>
+            <button type="button" id="hf-gl" onclick="setHistFilter('gl')" class="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition"><i class="fa-solid fa-book"></i> {{ ui.filter_glossary }}</button>
+        </div>
+        <button type="button" id="history-clear-btn" onclick="clearHistory()" class="text-xs text-slate-400 hover:text-red-300 transition flex-shrink-0"><i class="fa-solid fa-trash"></i> {{ ui.clear_history }}</button>
+    </div>
+    <p class="text-[11px] text-slate-500">{{ ui.history_note }}</p>
+
+    <div id="history-section" class="space-y-2">
+        <div id="history-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
+        <p id="history-empty" class="hidden text-center text-sm text-slate-500 py-6">{{ ui.history_empty }}</p>
+    </div>
+
+    <div id="glossary-section" class="hidden space-y-3">
+        <p class="text-[11px] text-slate-400">{{ ui.glossary_hint }}</p>
+        <form onsubmit="return addGlossaryTerm(event)" class="space-y-2">
+            <input id="gl-term" type="text" dir="auto" maxlength="100" required autocomplete="off" placeholder="{{ ui.glossary_term }}"
+                   class="w-full px-3 py-2 rounded-xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-600 text-sm">
+            <input id="gl-meaning" type="text" dir="auto" maxlength="200" required autocomplete="off" placeholder="{{ ui.glossary_meaning }}"
+                   class="w-full px-3 py-2 rounded-xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-600 text-sm">
+            <div class="flex gap-2 items-center">
+                <span class="text-[11px] text-slate-400 flex-shrink-0">{{ ui.glossary_target }}</span>
+                <select id="gl-to" class="min-w-0 flex-1 bg-slate-800 text-slate-100 text-sm rounded-xl px-2 py-2 border border-slate-700"></select>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition flex-shrink-0">{{ ui.glossary_add }}</button>
+            </div>
+        </form>
+        <div id="glossary-list" class="space-y-2 max-h-72 overflow-y-auto"></div>
+        <p id="glossary-empty" class="hidden text-center text-sm text-slate-500 py-4">{{ ui.glossary_empty }}</p>
+    </div>
 </div>

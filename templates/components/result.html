@@ -1,22 +1,37 @@
 {% macro result_box(mode, show_original=false, left=false) %}
 {% if translated_text and active_mode == mode %}
 <div class="mt-4 p-5 bg-indigo-950/40 rounded-2xl border border-indigo-800/60 space-y-3 {{ 'text-left' if left }}">
-    <div class="flex justify-between items-center border-b border-indigo-900/50 pb-2">
-        <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">{{ ui.result_label }} ({{ target_lang }})</span>
+    <div class="flex justify-between items-center border-b border-indigo-900/50 pb-2 gap-2">
+        <div class="flex items-center gap-2 min-w-0 flex-wrap">
+            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">{{ ui.result_label }} ({{ target_display }})</span>
             {% if detected_lang %}
             <span class="bg-emerald-950/80 text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-800">🌐 {{ detected_lang }}</span>
             {% endif %}
         </div>
-        <button type="button" onclick="copyResult('resultText-{{ mode }}', this)" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
-            <i class="fa-solid fa-copy"></i>
-        </button>
+        <div class="flex gap-1 flex-shrink-0">
+            <button type="button" onclick="editResult('resultText-{{ mode }}')" title="{{ ui.edit_translation }}" aria-label="{{ ui.edit_translation }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+            <button type="button" onclick="explainResult('{{ mode }}', this)" title="{{ ui.explain }}" aria-label="{{ ui.explain }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                <i class="fa-solid fa-lightbulb"></i>
+            </button>
+            <button type="button" onclick="toggleFavCurrent()" title="{{ ui.favorite }}" aria-label="{{ ui.favorite }}" class="fav-btn w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                <i class="fa-regular fa-star"></i>
+            </button>
+            <button type="button" onclick="speakResult('resultText-{{ mode }}')" title="{{ ui.speak }}" aria-label="{{ ui.speak }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                <i class="fa-solid fa-volume-high"></i>
+            </button>
+            <button type="button" onclick="copyResult('resultText-{{ mode }}', this)" aria-label="copy" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                <i class="fa-solid fa-copy"></i>
+            </button>
+        </div>
     </div>
-    <div id="resultText-{{ mode }}" class="text-indigo-100 text-base font-medium whitespace-pre-wrap leading-relaxed">{{ translated_text }}</div>
+    <div id="resultText-{{ mode }}" dir="auto" class="text-indigo-100 text-base font-medium whitespace-pre-wrap leading-relaxed">{{ translated_text }}</div>
+    <div id="explain-{{ mode }}" dir="auto" class="hidden text-xs text-amber-200 bg-amber-950/30 border border-amber-900/50 rounded-xl p-3 whitespace-pre-wrap leading-relaxed"></div>
     {% if show_original and original_text %}
     <details class="text-xs text-slate-400">
         <summary class="cursor-pointer">{{ ui.original_label }}</summary>
-        <div class="mt-2 whitespace-pre-wrap">{{ original_text }}</div>
+        <div dir="auto" class="mt-2 whitespace-pre-wrap">{{ original_text }}</div>
     </details>
     {% endif %}
 </div>

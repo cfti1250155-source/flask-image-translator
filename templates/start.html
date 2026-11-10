@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Choose your language</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center px-4">
+    <div class="max-w-md w-full bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-2xl space-y-5 my-6">
+        <div class="space-y-3">
+            <!-- 左にアイコン、右にタイトル・サブタイトル -->
+            <div class="flex items-center justify-center gap-3.5">
+                <img src="{{ url_for('static', filename='Tookie icon.png') }}" 
+                     alt="TOOKIE Logo" 
+                     class="w-14 h-14 rounded-2xl object-cover shadow-lg border border-slate-700/50">
+                <div class="text-left">
+                    <h1 class="text-3xl font-extrabold text-white tracking-wider leading-none mb-1">TOOKIE</h1>
+                    <p class="text-xs font-medium text-indigo-300">AI Universal Translator</p>
+                </div>
+            </div>
+            <p class="text-xs text-center text-slate-400">Choose your language</p>
+        </div>
+
+        <form id="start-form" action="{{ url_for('set_display_language') }}" method="POST" class="space-y-4">
+            <!-- 接続モード（オフラインは準備中） -->
+            <fieldset class="grid grid-cols-2 gap-2">
+                <legend class="sr-only">Connection</legend>
+                <label class="flex items-center gap-2 p-3 rounded-xl border border-indigo-500 bg-indigo-950/40 text-sm font-semibold cursor-pointer">
+                    <input type="radio" name="network_mode" value="online" checked class="accent-indigo-500">
+                    <i class="fa-solid fa-wifi text-indigo-400"></i> Online
+                </label>
+                <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-800 bg-slate-950/40 text-sm text-slate-500 cursor-not-allowed">
+                    <input type="radio" name="network_mode" value="offline" disabled class="accent-indigo-500">
+                    <i class="fa-solid fa-plane"></i>
+                    <span class="leading-tight">Offline<br><span class="text-[10px]">Coming soon</span></span>
+                </label>
+            </fieldset>
+
+            <input id="start-search" type="search" autocomplete="off" placeholder="Search languages..."
+                   class="w-full px-4 py-2.5 rounded-xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-600">
+
+            <div id="start-grid" class="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-1">
+                {% for lang in languages %}
+                <button type="submit" name="ui_lang" value="{{ lang.name }}"
+                        data-search="{{ (lang.name ~ ' ' ~ lang.native)|lower }}"
+                        class="start-opt text-left p-3 rounded-xl border {{ 'border-indigo-500 bg-indigo-950/40' if lang.name == current else 'border-slate-800 bg-slate-950/60 hover:bg-indigo-950/40' }} transition min-w-0">
+                    <span dir="auto" class="block text-sm font-medium text-slate-100 truncate">{{ lang.native }}</span>
+                    <span class="block text-[11px] text-slate-500 truncate">{{ lang.name }}</span>
+                </button>
+                {% endfor %}
+            </div>
+            <p id="start-empty" class="hidden text-center text-sm text-slate-500 py-3">No results</p>
+        </form>
+
+        {% if can_close %}
+        <a href="{{ url_for('index') }}" class="block text-center text-sm text-slate-400 hover:text-slate-200 py-1">
+            <i class="fa-solid fa-xmark"></i> Close
+        </a>
+        {% endif %}
+    </div>
+
+    <div id="start-loading" class="hidden fixed inset-0 bg-slate-950/90 flex flex-col items-center justify-center gap-3 z-50">
+        <i class="fa-solid fa-spinner fa-spin text-3xl text-indigo-400"></i>
+        <p class="text-sm text-slate-300">Preparing your language...</p>
+    </div>
+
+    <script>
+        const input = document.getElementById('start-search');
+        input.addEventListener('input', () => {
+            const q = input.value.trim().toLowerCase();
+            let shown = 0;
+            document.querySelectorAll('.start-opt').forEach(el => {
+                const hit = !q || el.dataset.search.includes(q);
+                el.classList.toggle('hidden', !hit);
+                if (hit) shown++;
+            });
+            document.getElementById('start-empty').classList.toggle('hidden', shown > 0);
+        });
+        // 初回は画面文言の自動翻訳に数秒かかることがあるため、待機表示を出す
+        document.getElementById('start-form').addEventListener('submit', () => {
+            document.getElementById('start-loading').classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
