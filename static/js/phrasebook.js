@@ -56,7 +56,7 @@ function phraseCard(text, meaning, code) {
     btns.className = 'flex gap-1 flex-shrink-0';
     btns.append(
         iconBtn('fa-solid fa-volume-high', UI.speak, () => speak(text, code)),
-        iconBtn('fa-solid fa-copy', 'copy', async () => { try { await navigator.clipboard.writeText(text); } catch (e) {} }),
+        iconBtn('fa-solid fa-copy', UI.copy_btn, async () => { try { await navigator.clipboard.writeText(text); } catch (e) {} }),
     );
     card.append(body, btns);
     return card;

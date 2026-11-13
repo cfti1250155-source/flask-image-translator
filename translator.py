@@ -2,11 +2,16 @@
 import json
 import os
 import re
+import threading
 import time
 
 from languages import AUTO
 
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-4-hydrogen")
+# 混雑(503)や時間切れのとき、2回目の試行でこのモデルに切り替える（空にすると切り替えない）
+FALLBACK_MODEL = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.8-flash").strip()
+# 翻訳に長い「思考」は不要。low にすると速く安くなる（off / 空で指定しない）
+THINKING_LEVEL = os.environ.get("GEMINI_THINKING_LEVEL", "low").strip().lower()
 
 
 def _env_num(name, default, cast=float):
@@ -20,6 +25,13 @@ TIMEOUT_SEC = _env_num("GEMINI_TIMEOUT", 40.0)      # 1回の呼び出しを待�
 ATTEMPTS = max(1, _env_num("GEMINI_ATTEMPTS", 2, int))  # 一時的な失敗のときの試行回数
 RETRY_WAIT = 1.0                                     # リトライ前の待ち（秒）
 RETRY_KEYS = {"err_timeout", "err_overloaded", "err_connection"}
+SWITCH_KEYS = {"err_timeout", "err_overloaded"}   # 予備のモデルに切り替える失敗
+
+_tls = threading.local()   # このリクエストで使うモデル（None なら MODEL）
+
+
+def _model():
+    return getattr(_tls, "model", None) or MODEL
 
 SYSTEM_INSTRUCTION = (
     "You are a translation engine. Translate faithfully, keep line breaks and tone. "
@@ -69,6 +81,7 @@ def _get_client():
     if _client is None:
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
+            print("[translator] GEMINI_API_KEY is not set (環境変数にAPIキーを設定してください)", flush=True)
             raise TranslationError("err_no_key")
         from google import genai  # 遅延import（キー未設定でもアプリは起動できる）
         from google.genai import types
@@ -113,24 +126,52 @@ def classify_exception(e):
 
 
 def _call(parts, system=None):
-    """_generate を呼び、例外を TranslationError に変換する。一時的な失敗は1回リトライ"""
+    """_generate を呼び、例外を TranslationError に変換する。一時的な失敗は1回リトライ。
+    混雑・時間切れ・モデルが無い(404)ときは、2回目は予備のモデル（GEMINI_FALLBACK_MODEL）に切り替える"""
     last = None
-    for attempt in range(ATTEMPTS):
-        try:
-            return _generate(parts, system=system)
-        except TranslationError as e:
-            if e.key not in RETRY_KEYS:
-                raise
-            last = e
-        except Exception as e:  # APIエラー・通信エラーなど
-            key = classify_exception(e)
-            print(f"[translator] Gemini error ({key}): {type(e).__name__}: {e}", flush=True)
-            last = TranslationError(key)
-            if key not in RETRY_KEYS:
-                raise last
-        if attempt + 1 < ATTEMPTS and RETRY_WAIT:
-            time.sleep(RETRY_WAIT)
-    raise last
+    switch_next = False
+    try:
+        for attempt in range(ATTEMPTS):
+            _tls.model = None
+            if attempt > 0 and switch_next and FALLBACK_MODEL and FALLBACK_MODEL != MODEL:
+                _tls.model = FALLBACK_MODEL
+                print(f"[translator] retrying with fallback model: {FALLBACK_MODEL}", flush=True)
+            switch_next = False
+            try:
+                return _generate(parts, system=system)
+            except TranslationError as e:
+                if e.key not in RETRY_KEYS:
+                    raise
+                last = e
+                switch_next = e.key in SWITCH_KEYS
+            except Exception as e:  # APIエラー・通信エラーなど
+                key = classify_exception(e)
+                print(f"[translator] Gemini error ({key}, model={_model()}): {type(e).__name__}: {e}", flush=True)
+                last = TranslationError(key)
+                gone = key == "err_failed" and getattr(e, "code", None) == 404   # モデルが無くなった
+                switch_next = key in SWITCH_KEYS or gone
+                if key not in RETRY_KEYS and not gone:
+                    raise last
+            if attempt + 1 < ATTEMPTS and RETRY_WAIT:
+                time.sleep(RETRY_WAIT)
+        raise last
+    finally:
+        _tls.model = None
+
+
+def _thinking_config(types):
+    """モデルの世代に合わせて「考える量」を下げる設定を作る（作れなければ None）"""
+    if os.environ.get("GEMINI_THINKING") == "1":   # 既定のまま使いたいとき
+        return None
+    m = _model().lower()
+    try:
+        if "2.5-flash" in m:
+            return types.ThinkingConfig(thinking_budget=0)
+        if THINKING_LEVEL and THINKING_LEVEL != "off" and re.search(r"gemini-[34]", m):
+            return types.ThinkingConfig(thinking_level=THINKING_LEVEL)
+    except Exception:
+        pass
+    return None
 
 
 def _generate(parts, system=None):
@@ -142,14 +183,25 @@ def _generate(parts, system=None):
         response_mime_type="application/json",
         temperature=0.2,
     )
-    if "2.5-flash" in MODEL and os.environ.get("GEMINI_THINKING") != "1":
-        try:  # 翻訳に長い「思考」は不要。切ると速く安くなる
-            cfg["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
-        except Exception:
-            pass
-    resp = _get_client().models.generate_content(
-        model=MODEL, contents=parts, config=types.GenerateContentConfig(**cfg),
-    )
+    thinking = _thinking_config(types)
+
+    def run(with_thinking):
+        c = dict(cfg)
+        if with_thinking and thinking is not None:
+            c["thinking_config"] = thinking
+        return _get_client().models.generate_content(
+            model=_model(), contents=parts, config=types.GenerateContentConfig(**c),
+        )
+
+    try:
+        resp = run(True)
+    except Exception as e:
+        # このモデルが「考える量」の指定に対応していないときは、指定なしでやり直す
+        if thinking is not None and "thinking" in str(e).lower() and getattr(e, "code", None) == 400:
+            print(f"[translator] thinking config not accepted by {_model()}; retrying without it", flush=True)
+            resp = run(False)
+        else:
+            raise
     text = resp.text or ""
     if not text:
         reason = _block_reason(resp)

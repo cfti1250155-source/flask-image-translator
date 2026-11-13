@@ -161,7 +161,7 @@ function pageCard(p) {
     body.textContent = p.translation || '—';
     row.append(
         iconBtn('fa-solid fa-expand', UI.big_show, () => showBig(p.translation, '', 'auto')),
-        iconBtn('fa-solid fa-copy', 'copy', async () => { try { await navigator.clipboard.writeText(p.translation); } catch (e) {} }),
+        iconBtn('fa-solid fa-copy', UI.copy_btn, async () => { try { await navigator.clipboard.writeText(p.translation); } catch (e) {} }),
     );
     head.append(t, row);
     card.append(head, body);

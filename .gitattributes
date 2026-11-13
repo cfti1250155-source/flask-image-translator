@@ -1,0 +1,10 @@
+# 改行コードを LF にそろえる（Windows で「全ファイルが変更」と表示されるのを防ぐ）
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.zip binary

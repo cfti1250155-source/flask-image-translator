@@ -55,14 +55,20 @@ CATEGORIES = [
     ]),
 ]
 
-# 言語コード(BCP-47, languages.py の code) -> {フレーズID: 訳}。順番は上の CATEGORIES と同じ
+# ---- 空港・飛行機のフレーズ（tools/phrasebook_airport.py）。「あいさつ・基本」の次に並べる ----
+from phrasebook_airport import AIRPORT_CATEGORIES, add_all as _add_airport  # noqa: E402
+
+BASE_IDS = [p[0] for c in CATEGORIES for p in c[3]]   # 空港フレーズを足す前のID（下の _add 用）
+CATEGORIES[1:1] = AIRPORT_CATEGORIES
+
+# 言語コード(BCP-47, languages.py の code) -> {フレーズID: 訳}
 T = {}
 
 T["ja-JP"] = {p[0]: p[1] for c in CATEGORIES for p in c[3]}
 T["en-US"] = {p[0]: p[2] for c in CATEGORIES for p in c[3]}
 
 def _add(code, lines):
-    ids = [p[0] for c in CATEGORIES for p in c[3]]
+    ids = BASE_IDS
     lines = [l.strip() for l in lines.strip().split("\n")]
     assert len(lines) == len(ids), (code, len(lines), len(ids))
     T[code] = dict(zip(ids, lines))
@@ -651,3 +657,5 @@ Doktora ihtiyacım var
 Pasaportumu kaybettim
 Kendimi iyi hissetmiyorum
 """)
+
+_add_airport(T)

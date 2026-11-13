@@ -8,35 +8,44 @@
             <span class="bg-emerald-950/80 text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-800">🌐 {{ detected_lang }}</span>
             {% endif %}
         </div>
-        <div class="flex gap-1 flex-wrap justify-end">
-            <button type="button" onclick="editResult('resultText-{{ mode }}')" title="{{ ui.edit_translation }}" aria-label="{{ ui.edit_translation }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
-                <i class="fa-solid fa-pen"></i>
-            </button>
-            <button type="button" onclick="showBigResult('{{ mode }}')" title="{{ ui.big_show }}" aria-label="{{ ui.big_show }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
-                <i class="fa-solid fa-expand"></i>
-            </button>
-            <button type="button" onclick="showAlternatives('{{ mode }}', this)" title="{{ ui.alts_btn }}" aria-label="{{ ui.alts_btn }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
-                <i class="fa-solid fa-shuffle"></i>
-            </button>
-            <button type="button" onclick="explainResult('{{ mode }}', this)" title="{{ ui.explain }}" aria-label="{{ ui.explain }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
-                <i class="fa-solid fa-lightbulb"></i>
-            </button>
-            <button type="button" onclick="saveVocabCurrent('{{ mode }}', this)" title="{{ ui.vocab_save }}" aria-label="{{ ui.vocab_save }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
-                <i class="fa-regular fa-bookmark"></i>
-            </button>
-            <button type="button" onclick="toggleFavCurrent()" title="{{ ui.favorite }}" aria-label="{{ ui.favorite }}" class="fav-btn w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
-                <i class="fa-regular fa-star"></i>
-            </button>
-            <button type="button" onclick="speakResult('resultText-{{ mode }}')" title="{{ ui.speak }}" aria-label="{{ ui.speak }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
-                <i class="fa-solid fa-volume-high"></i>
-            </button>
-            <button type="button" onclick="copyResult('resultText-{{ mode }}', this)" aria-label="copy" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+    </div>
+    <div id="resultText-{{ mode }}" dir="auto" class="rc-out text-indigo-100 font-medium whitespace-pre-wrap">{{ translated_text }}</div>
+    <div id="pron-{{ mode }}" dir="auto" class="{{ '' if pronunciation else 'hidden ' }}rc-pron text-indigo-300 whitespace-pre-wrap" title="{{ ui.pron_label }}">{{ pronunciation or '' }}</div>
+    <div class="rc-actions">
+        <button type="button" class="rc-btn" onclick="speakResult('resultText-{{ mode }}')" title="{{ ui.speak }}" aria-label="{{ ui.speak }}">
+            <i class="fa-solid fa-volume-high"></i>
+        </button>
+        <div class="rc-right">
+            <button type="button" class="rc-btn" onclick="copyResult('resultText-{{ mode }}', this)" title="{{ ui.copy_btn }}" aria-label="{{ ui.copy_btn }}">
                 <i class="fa-solid fa-copy"></i>
             </button>
+            <div class="rc-wrap">
+                <button type="button" class="rc-btn rc-more" onclick="toggleResultMenu(this)" title="{{ ui.more_actions }}" aria-label="{{ ui.more_actions }}" aria-haspopup="menu" aria-expanded="false">
+                    <i class="fa-solid fa-ellipsis"></i>
+                </button>
+                <div class="rc-menu hidden" role="menu">
+                    <button type="button" role="menuitem" class="rc-item" onclick="closeResultMenus(); editResult('resultText-{{ mode }}')">
+                        <i class="fa-solid fa-pen"></i><span class="rc-label">{{ ui.edit_translation }}</span>
+                    </button>
+                    <button type="button" role="menuitem" class="rc-item" onclick="closeResultMenus(); showBigResult('{{ mode }}')">
+                        <i class="fa-solid fa-expand"></i><span class="rc-label">{{ ui.big_show }}</span>
+                    </button>
+                    <button type="button" role="menuitem" class="rc-item" onclick="closeResultMenus(); showAlternatives('{{ mode }}', this)">
+                        <i class="fa-solid fa-shuffle"></i><span class="rc-label">{{ ui.alts_btn }}</span>
+                    </button>
+                    <button type="button" role="menuitem" class="rc-item" onclick="closeResultMenus(); explainResult('{{ mode }}', this)">
+                        <i class="fa-solid fa-lightbulb"></i><span class="rc-label">{{ ui.explain }}</span>
+                    </button>
+                    <button type="button" role="menuitem" class="rc-item" onclick="saveVocabCurrent('{{ mode }}', this)">
+                        <i class="fa-regular fa-bookmark"></i><span class="rc-label">{{ ui.vocab_save }}</span>
+                    </button>
+                    <button type="button" role="menuitem" class="rc-item fav-btn" onclick="closeResultMenus(); toggleFavCurrent()">
+                        <i class="fa-regular fa-star"></i><span class="rc-label">{{ ui.favorite }}</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
-    <div id="resultText-{{ mode }}" dir="auto" class="text-indigo-100 text-base font-medium whitespace-pre-wrap leading-relaxed">{{ translated_text }}</div>
-    <div id="pron-{{ mode }}" dir="auto" class="{{ '' if pronunciation else 'hidden ' }}text-sm text-indigo-300 whitespace-pre-wrap" title="{{ ui.pron_label }}">{{ pronunciation or '' }}</div>
     {% if same_detected %}
     <p class="text-xs text-amber-200 bg-amber-950/30 border border-amber-900/50 rounded-xl p-2" role="status"><i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1"></i>{{ ui.warn_detected_same }}</p>
     {% endif %}

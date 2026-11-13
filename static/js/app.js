@@ -120,3 +120,33 @@ document.addEventListener('DOMContentLoaded', () => {
     requestPersistence();
     switchTab(__pendingTab || INITIAL_TAB);
 });
+
+// ---- 結果カードの「…」メニュー ----
+function closeResultMenus() {
+    document.querySelectorAll('.rc-menu').forEach(m => m.classList.add('hidden'));
+    document.querySelectorAll('.rc-more[aria-expanded=true]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+}
+
+function toggleResultMenu(btn) {
+    const menu = btn.parentElement.querySelector('.rc-menu');
+    if (!menu) return;
+    const willOpen = menu.classList.contains('hidden');
+    closeResultMenus();
+    if (!willOpen) return;
+    menu.classList.remove('hidden', 'rc-down');
+    btn.setAttribute('aria-expanded', 'true');
+    // 上に出すと画面の外に出るときは下に出す
+    if (menu.getBoundingClientRect().top < 8) menu.classList.add('rc-down');
+    const first = menu.querySelector('.rc-item');
+    if (first) first.focus({ preventScroll: true });
+}
+
+document.addEventListener('click', e => {
+    if (!e.target.closest || !e.target.closest('.rc-wrap')) closeResultMenus();
+});
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    const open = document.querySelector('.rc-more[aria-expanded=true]');
+    closeResultMenus();
+    if (open) open.focus();
+});

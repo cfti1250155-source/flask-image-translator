@@ -64,3 +64,52 @@ html[data-theme=light] .set-opt[aria-pressed=true] { background-color: #4f46e5 !
 .ov-block.ov-src { background: rgba(120, 53, 15, .88); }
 .ov-stage { position: relative; }
 .ov-layer { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
+
+/* ---- 翻訳結果カード（読み上げ・コピー・「…」メニュー） ---- */
+.rc-out { font-size: 1.3rem; line-height: 1.5; }
+.rc-pron { font-size: .92rem; line-height: 1.45; opacity: .85; }
+.rc-actions { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding-top: .25rem; }
+.rc-right { display: flex; align-items: center; gap: .5rem; }
+.rc-wrap { position: relative; }
+.rc-btn {
+    width: 2.75rem; height: 2.75rem; border-radius: .9rem; border: 0; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1rem;
+    background: #1e293b; color: #cbd5e1; transition: background-color .15s;
+}
+.rc-btn:hover, .rc-btn:active { background: #334155; }
+.rc-btn:focus-visible, .rc-item:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; }
+.rc-menu {
+    position: absolute; right: 0; bottom: calc(100% + .4rem); z-index: 30; min-width: 13.5rem; max-width: 80vw;
+    padding: .35rem; border-radius: 1rem; background: #0f172a; border: 1px solid #334155;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+}
+.rc-menu.rc-down { bottom: auto; top: calc(100% + .4rem); }
+.rc-item {
+    display: flex; align-items: center; gap: .75rem; width: 100%; min-height: 2.75rem; padding: .4rem .75rem;
+    border: 0; border-radius: .75rem; background: transparent; color: #e2e8f0; text-align: left; font-size: .95rem; cursor: pointer;
+}
+.rc-item:hover, .rc-item:active { background: #1e293b; }
+.rc-item i { width: 1.1rem; text-align: center; color: #94a3b8; flex: 0 0 auto; }
+.rc-label { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+html[data-theme=light] .rc-btn { background: #e2e8f0; color: #334155; }
+html[data-theme=light] .rc-btn:hover, html[data-theme=light] .rc-btn:active { background: #cbd5e1; }
+html[data-theme=light] .rc-menu { background: #ffffff; border-color: #cbd5e1; box-shadow: 0 10px 30px rgba(15, 23, 42, .18); }
+html[data-theme=light] .rc-item { color: #0f172a; }
+html[data-theme=light] .rc-item:hover, html[data-theme=light] .rc-item:active { background: #f1f5f9; }
+html[data-theme=light] .rc-item i { color: #64748b; }
+
+/* ---- 「ゴミ箱に移しました［元に戻す］」の通知 ---- */
+.undo-toast {
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: max(1rem, env(safe-area-inset-bottom)); z-index: 70;
+    display: flex; align-items: center; gap: .75rem; max-width: 92vw; padding: .55rem .6rem .55rem 1rem;
+    border-radius: 1rem; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; font-size: .9rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+}
+.undo-toast button {
+    min-height: 2.5rem; padding: 0 .75rem; border: 0; border-radius: .75rem; background: transparent;
+    color: #a5b4fc; font-weight: 700; cursor: pointer;
+}
+.undo-toast button:hover { background: #1e293b; }
+html[data-theme=light] .undo-toast { background: #ffffff; color: #0f172a; border-color: #cbd5e1; box-shadow: 0 10px 30px rgba(15, 23, 42, .18); }
+html[data-theme=light] .undo-toast button { color: #4338ca; }
+html[data-theme=light] .undo-toast button:hover { background: #eef2ff; }

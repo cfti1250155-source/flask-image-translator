@@ -37,6 +37,266 @@
   ]
  },
  {
+  "id": "ap_checkin",
+  "ja": "空港：チェックイン・荷物",
+  "en": "Airport: check-in & bags",
+  "phrases": [
+   {
+    "id": "ap_checkin_where",
+    "ja": "チェックインカウンターはどこですか？",
+    "en": "Where is the check-in counter?"
+   },
+   {
+    "id": "ap_window",
+    "ja": "窓側の席をお願いします",
+    "en": "I'd like a window seat, please"
+   },
+   {
+    "id": "ap_aisle",
+    "ja": "通路側の席をお願いします",
+    "en": "I'd like an aisle seat, please"
+   },
+   {
+    "id": "ap_sit_together",
+    "ja": "隣同士の席にしていただけますか？",
+    "en": "Could we sit together, please?"
+   },
+   {
+    "id": "ap_check_bag",
+    "ja": "この荷物を預けたいです",
+    "en": "I'd like to check this bag"
+   },
+   {
+    "id": "ap_weight_limit",
+    "ja": "荷物の重量制限は何キロですか？",
+    "en": "What is the baggage weight limit?"
+   },
+   {
+    "id": "ap_excess_fee",
+    "ja": "超過料金はいくらですか？",
+    "en": "How much is the excess baggage fee?"
+   },
+   {
+    "id": "ap_carry_on",
+    "ja": "これは機内に持ち込めますか？",
+    "en": "Can I take this on board as carry-on?"
+   },
+   {
+    "id": "ap_fragile",
+    "ja": "割れ物が入っています。丁寧に扱ってください",
+    "en": "This bag has fragile items. Please handle it with care"
+   }
+  ]
+ },
+ {
+  "id": "ap_security",
+  "ja": "保安検査・入国審査",
+  "en": "Security & immigration",
+  "phrases": [
+   {
+    "id": "ap_security_where",
+    "ja": "保安検査場はどこですか？",
+    "en": "Where is the security checkpoint?"
+   },
+   {
+    "id": "ap_liquids",
+    "ja": "液体は持っていません",
+    "en": "I'm not carrying any liquids"
+   },
+   {
+    "id": "ap_laptop",
+    "ja": "パソコンを出す必要がありますか？",
+    "en": "Do I need to take out my laptop?"
+   },
+   {
+    "id": "ap_sightseeing",
+    "ja": "観光で来ました",
+    "en": "I'm here for sightseeing"
+   },
+   {
+    "id": "ap_stay_week",
+    "ja": "1週間滞在します",
+    "en": "I'll be staying for one week"
+   },
+   {
+    "id": "ap_stay_hotel",
+    "ja": "ホテルに滞在します",
+    "en": "I'll be staying at a hotel"
+   },
+   {
+    "id": "ap_return_ticket",
+    "ja": "帰りの航空券があります",
+    "en": "I have a return ticket"
+   },
+   {
+    "id": "ap_declare_nothing",
+    "ja": "申告するものはありません",
+    "en": "I have nothing to declare"
+   },
+   {
+    "id": "ap_first_visit",
+    "ja": "初めての訪問です",
+    "en": "This is my first visit"
+   }
+  ]
+ },
+ {
+  "id": "ap_gate",
+  "ja": "搭乗口・乗り継ぎ",
+  "en": "Gate & connections",
+  "phrases": [
+   {
+    "id": "ap_gate_where",
+    "ja": "搭乗口はどこですか？",
+    "en": "Where is the boarding gate?"
+   },
+   {
+    "id": "ap_boarding_time",
+    "ja": "搭乗は何時からですか？",
+    "en": "What time does boarding start?"
+   },
+   {
+    "id": "ap_delayed",
+    "ja": "このフライトは遅れていますか？",
+    "en": "Is this flight delayed?"
+   },
+   {
+    "id": "ap_gate_changed",
+    "ja": "搭乗口は変更になりましたか？",
+    "en": "Has the gate been changed?"
+   },
+   {
+    "id": "ap_missed",
+    "ja": "飛行機に乗り遅れました",
+    "en": "I missed my flight"
+   },
+   {
+    "id": "ap_next_flight",
+    "ja": "次の便に変更できますか？",
+    "en": "Can I change to the next flight?"
+   },
+   {
+    "id": "ap_connecting",
+    "ja": "乗り継ぎ便があります",
+    "en": "I have a connecting flight"
+   },
+   {
+    "id": "ap_transfer_desk",
+    "ja": "乗り継ぎカウンターはどこですか？",
+    "en": "Where is the transfer desk?"
+   },
+   {
+    "id": "ap_wheelchair",
+    "ja": "車椅子を手配していただけますか？",
+    "en": "Could you arrange a wheelchair for me?"
+   }
+  ]
+ },
+ {
+  "id": "ap_flight",
+  "ja": "機内",
+  "en": "On the plane",
+  "phrases": [
+   {
+    "id": "ap_my_seat",
+    "ja": "私の席はどこですか？",
+    "en": "Where is my seat?"
+   },
+   {
+    "id": "ap_that_seat",
+    "ja": "すみません、そこは私の席だと思います",
+    "en": "Excuse me, I think that's my seat"
+   },
+   {
+    "id": "ap_overhead",
+    "ja": "荷物を上の棚に入れるのを手伝っていただけますか？",
+    "en": "Could you help me put my bag in the overhead bin?"
+   },
+   {
+    "id": "ap_get_past",
+    "ja": "すみません、通していただけますか？",
+    "en": "Excuse me, may I get past?"
+   },
+   {
+    "id": "ap_restroom",
+    "ja": "トイレに行きたいです",
+    "en": "I need to use the restroom"
+   },
+   {
+    "id": "ap_blanket",
+    "ja": "毛布をいただけますか？",
+    "en": "Could I have a blanket, please?"
+   },
+   {
+    "id": "ap_water",
+    "ja": "お水をいただけますか？",
+    "en": "Could I have some water, please?"
+   },
+   {
+    "id": "ap_veg_meal",
+    "ja": "ベジタリアン向けの食事はありますか？",
+    "en": "Do you have a vegetarian meal?"
+   },
+   {
+    "id": "ap_motion_sick",
+    "ja": "気分が悪いです。酔い止めはありますか？",
+    "en": "I feel sick. Do you have motion sickness medicine?"
+   }
+  ]
+ },
+ {
+  "id": "ap_arrival",
+  "ja": "到着・荷物の受け取り",
+  "en": "Arrival & baggage claim",
+  "phrases": [
+   {
+    "id": "ap_baggage_claim",
+    "ja": "手荷物受取所はどこですか？",
+    "en": "Where is the baggage claim?"
+   },
+   {
+    "id": "ap_bag_missing",
+    "ja": "荷物が出てきません",
+    "en": "My luggage hasn't come out"
+   },
+   {
+    "id": "ap_bag_damaged",
+    "ja": "荷物が壊れています",
+    "en": "My luggage is damaged"
+   },
+   {
+    "id": "ap_lost_baggage",
+    "ja": "紛失手荷物の窓口はどこですか？",
+    "en": "Where is the lost baggage counter?"
+   },
+   {
+    "id": "ap_exchange",
+    "ja": "両替所はどこですか？",
+    "en": "Where can I exchange money?"
+   },
+   {
+    "id": "ap_sim",
+    "ja": "SIMカードはどこで買えますか？",
+    "en": "Where can I buy a SIM card?"
+   },
+   {
+    "id": "ap_taxi",
+    "ja": "タクシー乗り場はどこですか？",
+    "en": "Where is the taxi stand?"
+   },
+   {
+    "id": "ap_train_city",
+    "ja": "市内へ行く電車にはどこで乗れますか？",
+    "en": "Where can I take a train to the city center?"
+   },
+   {
+    "id": "ap_info_desk",
+    "ja": "案内所はどこですか？",
+    "en": "Where is the information desk?"
+   }
+  ]
+ },
+ {
   "id": "food",
   "ja": "食事",
   "en": "Food",

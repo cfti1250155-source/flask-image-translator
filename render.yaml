@@ -10,9 +10,11 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: GEMINI_MODEL
+        value: gemini-4-hydrogen
+      - key: GEMINI_FALLBACK_MODEL
         value: gemini-3.8-flash
       # 以下は任意（既定値のままでOK）
-      # - GEMINI_TIMEOUT=40 / GEMINI_ATTEMPTS=2
+      # - GEMINI_TIMEOUT=40 / GEMINI_ATTEMPTS=2 / GEMINI_THINKING_LEVEL=low
       # - RATE_PER_MIN=20 / DAILY_LIMIT_PER_IP=300 / SITE_DAILY_LIMIT=3000
       # - ADMIN_TOKEN=（設定すると /api/stats?token=... で集計を見られる）
       # - KEEP_ALIVE_URL=https://<自分のURL>/healthz

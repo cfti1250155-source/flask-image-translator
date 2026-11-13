@@ -62,7 +62,7 @@ with sync_playwright() as p:
     check("settings survive reload (light)", pg.evaluate("document.documentElement.getAttribute('data-theme')") == "light")
 
     # --- 大きく表示 ---
-    pg.click("#tab-text button[onclick*=showBigResult]")
+    pg.click("#tab-text .rc-more"); pg.click("#tab-text button[onclick*=showBigResult]")
     pg.wait_for_selector(".big-overlay")
     fs = pg.evaluate("parseFloat(getComputedStyle(document.querySelector('.big-text')).fontSize)")
     check(f"big text is large ({fs}px)", fs >= 60)
@@ -71,7 +71,7 @@ with sync_playwright() as p:
     check("tap closes", pg.query_selector(".big-overlay") is None)
 
     # --- 別の言い方 ---
-    pg.click("#tab-text button[onclick*=showAlternatives]")
+    pg.click("#tab-text .rc-more"); pg.click("#tab-text button[onclick*=showAlternatives]")
     pg.wait_for_selector("#alts-text .alt-chip")
     chips = pg.eval_on_selector_all("#alts-text .alt-chip", "els=>els.map(e=>e.textContent)")
     check(f"alternatives {chips}", chips == ["Hi there", "Hey!", "Good day"])

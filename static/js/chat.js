@@ -181,10 +181,12 @@ function convListen() {
 }
 
 function clearConversation() {
+    const tid = trashAdd('chat', loadChat());
     saveChat([]);
     $('conv-log').replaceChildren();
     $('conv-empty').classList.remove('hidden');
     setConvStatus('');
+    undoToast(tid);
 }
 
 // 2人の言語が同じなら警告を出す

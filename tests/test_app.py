@@ -305,7 +305,7 @@ def test_phrasebook_data_is_complete():
     from languages import LANGUAGES
     index = json.load(open(os.path.join(DIR, "index.json"), encoding="utf-8"))
     ids = [p["id"] for c in index for p in c["phrases"]]
-    assert len(ids) == len(set(ids)) == 36
+    assert len(ids) == len(set(ids)) == 81   # 基本36 + 空港45
     langs = available_languages()
     assert len(langs) >= 15 and "Japanese" in langs and "English" in langs
     for l in LANGUAGES:

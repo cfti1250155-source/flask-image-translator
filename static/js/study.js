@@ -10,6 +10,9 @@ function saveVocabEntry(entry, btn) {
     if (icon) {
         icon.className = 'fa-solid fa-bookmark text-indigo-400';
         btn.title = UI.vocab_saved;
+        const label = btn.querySelector('.rc-label');
+        if (label) label.textContent = UI.vocab_saved;
+        if (typeof closeResultMenus === 'function') closeResultMenus();
     }
 }
 
@@ -54,9 +57,11 @@ function renderStudy() {
         row.append(
             iconBtn('fa-solid fa-volume-high', UI.speak, () => speak(v.out, v.tcode || codeOf(v.tgt))),
             iconBtn('fa-solid fa-trash', UI.delete, () => {
+                const tid = trashAdd('vocab', [v]);
                 saveVocab(loadVocab().filter(x => x.id !== v.id));
                 if (studyCurrent && studyCurrent.id === v.id) endStudy();
                 renderStudy();
+                undoToast(tid);
             }),
         );
         card.append(src, out, row);

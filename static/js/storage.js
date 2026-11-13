@@ -128,3 +128,56 @@ function addVocab(entry) {
     saveVocab(list.slice(0, VMAX));
     return true;
 }
+
+// ゴミ箱: 削除したものを30日だけ残す。この端末の localStorage のみで、バックアップには含めない。
+// 1件 = { tid, kind: 'history'|'glossary'|'vocab'|'chat', at: 削除した時刻, items: [元のデータ...] }
+const TKEY = 'tl_trash_v1';
+const TRASH_DAYS = 30;
+const TMAX = 300;
+
+function loadTrash() {
+    let a = [];
+    try { a = JSON.parse(localStorage.getItem(TKEY) || '[]'); } catch (e) {}
+    if (!Array.isArray(a)) return [];
+    const limit = Date.now() - TRASH_DAYS * 86400000;
+    return a.filter(t => t && Array.isArray(t.items) && t.items.length && t.at > limit);
+}
+
+function saveTrash(list) {
+    try { localStorage.setItem(TKEY, JSON.stringify(list.slice(0, TMAX))); } catch (e) {}
+}
+
+// ゴミ箱に入れる。戻り値は tid（「元に戻す」に使う）
+function trashAdd(kind, items) {
+    if (!items || !items.length) return null;
+    const list = loadTrash();
+    const tid = uid();
+    list.unshift({ tid, kind, at: Date.now(), items });
+    saveTrash(list);
+    return tid;
+}
+
+// 元の場所に戻す。すでに同じ id があれば重ねない。戻したら true
+function trashRestore(tid) {
+    const list = loadTrash();
+    const t = list.find(x => x.tid === tid);
+    if (!t) return false;
+    const addTo = (load, save, sortFn) => {
+        const cur = load();
+        const have = new Set(cur.map(x => x.id));
+        const back = t.items.filter(x => !have.has(x.id));
+        const merged = back.concat(cur);
+        if (sortFn) merged.sort(sortFn);
+        save(merged);
+    };
+    if (t.kind === 'history') addTo(loadHistory, saveHistory, (a, b) => b.ts - a.ts);
+    else if (t.kind === 'glossary') addTo(loadGlossary, saveGlossary, null);
+    else if (t.kind === 'vocab') addTo(loadVocab, saveVocab, null);
+    else if (t.kind === 'chat') addTo(loadChat, saveChat, (a, b) => a.ts - b.ts);
+    saveTrash(list.filter(x => x.tid !== tid));
+    return true;
+}
+
+function trashDelete(tid) { saveTrash(loadTrash().filter(x => x.tid !== tid)); }
+function trashEmpty() { saveTrash([]); }
+function trashDaysLeft(t) { return Math.max(1, Math.ceil((t.at + TRASH_DAYS * 86400000 - Date.now()) / 86400000)); }

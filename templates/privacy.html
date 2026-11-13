@@ -10,7 +10,7 @@
 <body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center px-4">
     <main class="max-w-md w-full bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-2xl space-y-4 my-6">
         <h1 class="text-xl font-bold">{{ ui.privacy_title }}</h1>
-        {% for n in [1, 2, 3, 4] %}
+        {% for n in [1, 2, 3, 4, 5, 6] %}
         <p class="text-sm text-slate-300 leading-relaxed">{{ ui['privacy_body_' ~ n] }}</p>
         {% endfor %}
         <a href="{{ url_for('index') }}" class="block text-center bg-slate-800 hover:bg-slate-700 rounded-2xl py-2.5 text-sm">{{ ui.privacy_back }}</a>

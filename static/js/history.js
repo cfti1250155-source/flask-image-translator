@@ -55,7 +55,7 @@ function historyItem(e) {
         iconBtn('fa-solid fa-volume-high', UI.speak, () => speak(e.out, e.tcode || codeOf(e.tgt))),
         iconBtn('fa-regular fa-bookmark', UI.vocab_save, (ev) => saveVocabEntry(
             { src: e.src, out: e.out, srcLang: e.srcLang, tgt: e.tgt, tcode: e.tcode || codeOf(e.tgt), pron: e.pron }, ev.currentTarget)),
-        iconBtn('fa-solid fa-copy', 'copy', async () => {
+        iconBtn('fa-solid fa-copy', UI.copy_btn, async () => {
             try { await navigator.clipboard.writeText(e.out); } catch (err) {}
         }),
         ...(OFFLINE_PAGE ? [] : [iconBtn('fa-solid fa-rotate-left', UI.reuse, () => {
@@ -64,8 +64,10 @@ function historyItem(e) {
             switchTab('text');
         })]),
         iconBtn('fa-solid fa-trash', UI.delete, () => {
+            const tid = trashAdd('history', [e]);
             saveHistory(loadHistory().filter(x => x.id !== e.id));
             renderHistory();
+            undoToast(tid);
         }),
     );
     card.append(meta, src, out, row);
@@ -74,17 +76,20 @@ function historyItem(e) {
 
 function renderHistory() {
     const on = 'bg-indigo-600 text-white', off = 'bg-slate-800 text-slate-300';
-    ['all', 'fav', 'gl', 'phrases', 'study', 'settings'].forEach(k => {
+    ['all', 'fav', 'gl', 'phrases', 'study', 'trash', 'settings'].forEach(k => {
         const pill = $('hf-' + k);
         if (pill) pill.className = 'px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition ' + (histFilter === k ? on : off);
     });
     const isGl = histFilter === 'gl', isPh = histFilter === 'phrases', isSet = histFilter === 'settings', isStudy = histFilter === 'study';
-    $('history-section').classList.toggle('hidden', isGl || isPh || isSet || isStudy);
+    const isTr = histFilter === 'trash';
+    $('history-section').classList.toggle('hidden', isGl || isPh || isSet || isStudy || isTr);
+    $('trash-section').classList.toggle('hidden', !isTr);
     $('glossary-section').classList.toggle('hidden', !isGl);
     $('phrase-section').classList.toggle('hidden', !isPh);
     $('settings-section').classList.toggle('hidden', !isSet);
     $('study-section').classList.toggle('hidden', !isStudy);
-    $('history-clear-btn').classList.toggle('hidden', isGl || isPh || isSet || isStudy);
+    $('history-clear-btn').classList.toggle('hidden', isGl || isPh || isSet || isStudy || isTr);
+    if (isTr) { renderTrash(); return; }
     if (isStudy) { renderStudy(); return; }
     if (isSet) { renderSettings(); renderDataInfo(); return; }
     if (isGl) { renderGlossary(); return; }
@@ -98,9 +103,14 @@ function renderHistory() {
 }
 
 function clearHistory() {
+    const all = loadHistory();
+    const gone = all.filter(e => !e.fav);
+    if (!gone.length) return;
     if (!confirm(UI.confirm_clear)) return;
-    saveHistory(loadHistory().filter(e => e.fav));
+    const tid = trashAdd('history', gone);
+    saveHistory(all.filter(e => e.fav));
     renderHistory();
+    undoToast(tid);
 }
 
 function populateLangSelect(sel, selected) {
@@ -145,8 +155,10 @@ function renderGlossary() {
         m.textContent = e.meaning;
         body.append(tag, t, m);
         card.append(body, iconBtn('fa-solid fa-trash', UI.delete, () => {
+            const tid = trashAdd('glossary', [e]);
             saveGlossary(loadGlossary().filter(x => x.id !== e.id));
             renderGlossary();
+            undoToast(tid);
         }));
         box.appendChild(card);
     });
@@ -172,3 +184,95 @@ async function explainText(text, lang, el) {
     }
 }
 
+// ---- 「ゴミ箱に移しました［元に戻す］」の通知 ----
+let toastTimer = null;
+function undoToast(tid) {
+    if (!tid) return;
+    const old = $('undo-toast');
+    if (old) old.remove();
+    clearTimeout(toastTimer);
+    const t = document.createElement('div');
+    t.id = 'undo-toast';
+    t.className = 'undo-toast';
+    t.setAttribute('role', 'status');
+    const msg = document.createElement('span');
+    msg.textContent = UI.trash_moved;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = UI.trash_restore;
+    b.addEventListener('click', () => {
+        clearTimeout(toastTimer);
+        t.remove();
+        if (trashRestore(tid)) afterRestore();
+    });
+    t.append(msg, b);
+    document.body.appendChild(t);
+    toastTimer = setTimeout(() => t.remove(), 7000);
+}
+
+// 戻したあと、いま開いている画面を作り直す
+function afterRestore() {
+    if (typeof renderHistory === 'function' && $('history-section')) renderHistory();
+    const log = $('conv-log');
+    if (log && typeof buildBubble === 'function') {
+        log.replaceChildren();
+        const chat = loadChat();
+        chat.forEach(m => buildBubble(m));
+        $('conv-empty').classList.toggle('hidden', chat.length > 0);
+    }
+}
+
+// ---- ゴミ箱 ----
+function trashPreview(t) {
+    const e = t.items[0] || {};
+    if (t.kind === 'glossary') return [e.term || '', e.meaning || ''];
+    return [e.src || '', e.out || ''];
+}
+
+function renderTrash() {
+    $('trash-note').textContent = fmt(UI.trash_note_v, { n: TRASH_DAYS });
+    const box = $('trash-list');
+    box.replaceChildren();
+    const list = loadTrash();
+    list.forEach(t => {
+        const card = document.createElement('div');
+        card.className = 'p-3 rounded-2xl bg-slate-950/60 border border-slate-800 flex gap-2 items-start';
+        const body = document.createElement('div');
+        body.className = 'min-w-0 flex-1 space-y-0.5';
+        const tag = document.createElement('div');
+        tag.className = 'text-[10px] text-slate-500';
+        tag.textContent = (UI['trash_kind_' + t.kind] || t.kind) +
+            (t.items.length > 1 ? ' · ' + fmt(UI.trash_count_n, { n: t.items.length }) : '') +
+            ' · ' + fmt(UI.trash_days_left_n, { n: trashDaysLeft(t) });
+        const [a, b] = trashPreview(t);
+        const l1 = document.createElement('div');
+        l1.dir = 'auto';
+        l1.className = 'text-xs text-slate-300 whitespace-pre-wrap break-words';
+        l1.textContent = a.length > 120 ? a.slice(0, 120) + '…' : a;
+        const l2 = document.createElement('div');
+        l2.dir = 'auto';
+        l2.className = 'text-sm text-indigo-100 font-medium whitespace-pre-wrap break-words';
+        l2.textContent = b.length > 120 ? b.slice(0, 120) + '…' : b;
+        body.append(tag, l1, l2);
+        const btns = document.createElement('div');
+        btns.className = 'flex flex-col gap-1 flex-shrink-0';
+        btns.append(
+            iconBtn('fa-solid fa-rotate-left', UI.trash_restore, () => { trashRestore(t.tid); afterRestore(); }),
+            iconBtn('fa-solid fa-xmark text-red-300', UI.trash_delete_forever, () => {
+                if (!confirm(UI.trash_delete_confirm)) return;
+                trashDelete(t.tid);
+                renderTrash();
+            }),
+        );
+        card.append(body, btns);
+        box.appendChild(card);
+    });
+    $('trash-empty').classList.toggle('hidden', list.length > 0);
+    $('trash-empty-btn').classList.toggle('hidden', list.length === 0);
+}
+
+function emptyTrashAll() {
+    if (!loadTrash().length || !confirm(UI.trash_empty_confirm)) return;
+    trashEmpty();
+    renderTrash();
+}
