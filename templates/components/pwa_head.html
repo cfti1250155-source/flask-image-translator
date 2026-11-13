@@ -1,0 +1,19 @@
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='icon-192.png', v=asset_v) }}">
+    <link rel="manifest" href="{{ url_for('manifest') }}">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="TOOKIE">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png', v=asset_v) }}">
+    <script>
+    // 表示設定（配色・文字サイズ）を描画前に反映して、ちらつきを防ぐ
+    (function () {
+        try {
+            var st = JSON.parse(localStorage.getItem('tl_settings_v1') || '{}');
+            var d = document.documentElement;
+            if (st.theme === 'light') d.setAttribute('data-theme', 'light');
+            if (st.fs === 'l' || st.fs === 'xl') { d.setAttribute('data-fs', st.fs); d.style.fontSize = st.fs === 'xl' ? '128%' : '114%'; }
+        } catch (e) {}
+    })();
+    </script>

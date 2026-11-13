@@ -1,19 +1,28 @@
 {% macro result_box(mode, show_original=false, left=false) %}
 {% if translated_text and active_mode == mode %}
 <div class="mt-4 p-5 bg-indigo-950/40 rounded-2xl border border-indigo-800/60 space-y-3 {{ 'text-left' if left }}">
-    <div class="flex justify-between items-center border-b border-indigo-900/50 pb-2 gap-2">
+    <div class="flex justify-between items-center flex-wrap border-b border-indigo-900/50 pb-2 gap-2">
         <div class="flex items-center gap-2 min-w-0 flex-wrap">
             <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">{{ ui.result_label }} ({{ target_display }})</span>
             {% if detected_lang %}
             <span class="bg-emerald-950/80 text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-800">🌐 {{ detected_lang }}</span>
             {% endif %}
         </div>
-        <div class="flex gap-1 flex-shrink-0">
+        <div class="flex gap-1 flex-wrap justify-end">
             <button type="button" onclick="editResult('resultText-{{ mode }}')" title="{{ ui.edit_translation }}" aria-label="{{ ui.edit_translation }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
                 <i class="fa-solid fa-pen"></i>
             </button>
+            <button type="button" onclick="showBigResult('{{ mode }}')" title="{{ ui.big_show }}" aria-label="{{ ui.big_show }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+            <button type="button" onclick="showAlternatives('{{ mode }}', this)" title="{{ ui.alts_btn }}" aria-label="{{ ui.alts_btn }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                <i class="fa-solid fa-shuffle"></i>
+            </button>
             <button type="button" onclick="explainResult('{{ mode }}', this)" title="{{ ui.explain }}" aria-label="{{ ui.explain }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
                 <i class="fa-solid fa-lightbulb"></i>
+            </button>
+            <button type="button" onclick="saveVocabCurrent('{{ mode }}', this)" title="{{ ui.vocab_save }}" aria-label="{{ ui.vocab_save }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+                <i class="fa-regular fa-bookmark"></i>
             </button>
             <button type="button" onclick="toggleFavCurrent()" title="{{ ui.favorite }}" aria-label="{{ ui.favorite }}" class="fav-btn w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
                 <i class="fa-regular fa-star"></i>
@@ -27,6 +36,11 @@
         </div>
     </div>
     <div id="resultText-{{ mode }}" dir="auto" class="text-indigo-100 text-base font-medium whitespace-pre-wrap leading-relaxed">{{ translated_text }}</div>
+    <div id="pron-{{ mode }}" dir="auto" class="{{ '' if pronunciation else 'hidden ' }}text-sm text-indigo-300 whitespace-pre-wrap" title="{{ ui.pron_label }}">{{ pronunciation or '' }}</div>
+    {% if same_detected %}
+    <p class="text-xs text-amber-200 bg-amber-950/30 border border-amber-900/50 rounded-xl p-2" role="status"><i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1"></i>{{ ui.warn_detected_same }}</p>
+    {% endif %}
+    <div id="alts-{{ mode }}" class="hidden space-y-1.5"></div>
     <div id="explain-{{ mode }}" dir="auto" class="hidden text-xs text-amber-200 bg-amber-950/30 border border-amber-900/50 rounded-xl p-3 whitespace-pre-wrap leading-relaxed"></div>
     {% if show_original and original_text %}
     <details class="text-xs text-slate-400">

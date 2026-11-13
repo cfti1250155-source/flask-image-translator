@@ -75,3 +75,56 @@ function upsertGlossary(kind, term, meaning, to) {
 function learnCorrection(src, out, toLang) {
     if (src && src.length <= 300) upsertGlossary('example', src, out, toLang);
 }
+
+// チャット（キーはバックアップ機能でも使う）
+const CKEY = 'tl_conv_langs_v1';
+const CHATKEY = 'tl_chat_v1';
+const PREFKEY = 'tl_chat_prefs_v1';
+
+function loadChat() {
+    try {
+        const a = JSON.parse(localStorage.getItem(CHATKEY) || '[]');
+        return Array.isArray(a) ? a : [];
+    } catch (e) { return []; }
+}
+function saveChat(list) {
+    try { localStorage.setItem(CHATKEY, JSON.stringify(list.slice(-100))); } catch (e) {}
+}
+
+// 単語帳（学習用）。box は覚えた度合い(0〜5)、due は次に復習する時刻
+const VKEY = 'tl_vocab_v1';
+const VMAX = 1000;
+const SRS_DAYS = [0, 1, 3, 7, 14, 30];
+
+function loadVocab() {
+    try {
+        const a = JSON.parse(localStorage.getItem(VKEY) || '[]');
+        return Array.isArray(a) ? a : [];
+    } catch (e) { return []; }
+}
+
+function saveVocab(list) {
+    try { localStorage.setItem(VKEY, JSON.stringify(list)); } catch (e) {}
+}
+
+// 追加。同じ原文・同じ翻訳先がすでにあれば訳だけ更新して false を返す
+function addVocab(entry) {
+    const src = String(entry.src || '').trim().slice(0, 500);
+    const out = String(entry.out || '').trim().slice(0, 500);
+    if (!src || !out) return false;
+    const list = loadVocab();
+    const dup = list.find(x => x.src === src && x.tgt === entry.tgt);
+    if (dup) {
+        dup.out = out;
+        dup.pron = String(entry.pron || '').slice(0, 500);
+        saveVocab(list);
+        return false;
+    }
+    list.unshift({
+        id: uid(), ts: Date.now(), src, out,
+        srcLang: entry.srcLang || '', tgt: entry.tgt || '', tcode: entry.tcode || '',
+        pron: String(entry.pron || '').slice(0, 500), box: 0, due: 0,
+    });
+    saveVocab(list.slice(0, VMAX));
+    return true;
+}

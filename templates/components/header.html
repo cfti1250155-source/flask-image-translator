@@ -1,8 +1,8 @@
 <!-- ヘッダー（ロゴ ＋ 言語選択バー） -->
 <div class="flex items-center justify-between mb-4 mt-2">
     <!-- 左側：インコアイコン + TOOKIEロゴ -->
-    <a href="{{ url_for('index') }}" class="flex items-center gap-2.5">
-        <img src="{{ url_for('static', filename='Tookie icon.png') }}" 
+    <a href="{{ url_for('index') }}" class="flex items-center gap-2.5" translate="no">
+        <img src="{{ url_for('static', filename='icon-192.png', v=asset_v) }}" 
              alt="TOOKIE Logo" 
              class="w-9 h-9 rounded-xl object-cover border border-slate-700/50 shadow">
         <div class="text-left">
@@ -11,10 +11,15 @@
         </div>
     </a>
 
-    <!-- 右側：UI言語切り替えボタン -->
-    <a href="{{ url_for('start') }}" title="{{ ui.change_language }}" aria-label="{{ ui.change_language }}" class="flex items-center gap-1.5 px-3 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full text-xs border border-slate-700 transition flex-shrink-0">
-        <i class="fa-solid fa-globe text-indigo-400"></i><span dir="auto" class="max-w-[5rem] truncate">{{ ui_native }}</span>
-    </a>
+    <!-- 右側：設定ボタン + UI言語切り替えボタン -->
+    <div class="flex items-center gap-1.5 flex-shrink-0">
+        <a href="{{ url_for('start') }}" title="{{ ui.change_language }}" aria-label="{{ ui.change_language }}" class="flex items-center gap-1.5 px-3 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full text-xs border border-slate-700 transition flex-shrink-0">
+            <i class="fa-solid fa-globe text-indigo-400"></i><span dir="auto" class="max-w-[5rem] truncate">{{ ui_native }}</span>
+        </a>
+        <button type="button" id="open-settings" onclick="openSettings()" title="{{ ui.filter_settings }}" aria-label="{{ ui.filter_settings }}" class="flex items-center justify-center w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full text-xs border border-slate-700 transition flex-shrink-0">
+            <i class="fa-solid fa-gear text-indigo-400"></i>
+        </button>
+    </div>
 </div>
 
 <!-- 言語選択バー（翻訳元 ↔ 翻訳先の切り替え） -->

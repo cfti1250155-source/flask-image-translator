@@ -40,7 +40,7 @@ with sync_playwright() as p:
         check(f"run{run}: chat tab opens right after load", True)
         pg.click("#nav-text")
         src = pg.inner_text("#source-lang-container"); tgt = pg.inner_text("#target-lang-container")
-        check(f"run{run}: From=自動判定 / To=English ({src!r},{tgt!r})", "自動判定" in src and "English" in tgt)
+        check(f"run{run}: From=自動判定 / To=日本語 ({src!r},{tgt!r})", "自動判定" in src and "日本語" in tgt)
         # 空送信はブラウザ側で止まる
         pg.click("#tab-text button[type=submit]")
         check(f"run{run}: empty text blocked", pg.url.rstrip("/") == B)

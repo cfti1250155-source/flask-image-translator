@@ -51,18 +51,27 @@ def get_ui_labels(lang):
     return labels
 
 
+def _missing(lang):
+    """翻訳が必要なキー（FIXED と手書き言語は対象外）"""
+    have = _load_cached(lang) or {}
+    return {k: v for k, v in UI_LABELS["English"].items() if k not in FIXED_LABELS and k not in have}
+
+
 def has_labels(lang):
-    return lang in UI_LABELS or _load_cached(lang) is not None
+    """文言が（ほぼ）揃っているか。新しいキーが増えたときは False になり、差分だけ翻訳される"""
+    if lang in UI_LABELS:
+        return True
+    return _load_cached(lang) is not None and not _missing(lang)
 
 
 def ensure_ui_labels(lang):
-    """未生成なら Gemini で翻訳して保存する。成功すれば True（失敗しても例外は出さない）"""
+    """足りない文言だけ Gemini で翻訳して保存する。揃っていれば True（失敗しても例外は出さない）"""
     if has_labels(lang):
         return True
     if time.time() - _failed_at.get(lang, 0) < RETRY_AFTER:
         return False
     _failed_at[lang] = time.time()
-    source = {k: v for k, v in UI_LABELS["English"].items() if k not in FIXED_LABELS}
+    source = _missing(lang)
     try:
         translated = translator.translate_labels(source, lang)
     except Exception as e:
@@ -72,17 +81,39 @@ def ensure_ui_labels(lang):
         print(f"[ui_i18n] incomplete labels for {lang}: {len(translated)}/{len(source)}", flush=True)
         return False
     _failed_at.pop(lang, None)
+    merged = dict(_load_cached(lang) or {})
+    merged.update(translated)
     with _lock:
-        _mem[lang] = translated
+        _mem[lang] = merged
     try:
         os.makedirs(LABEL_DIR, exist_ok=True)
         tmp = _path(lang) + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(translated, f, ensure_ascii=False, indent=1)
+            json.dump(merged, f, ensure_ascii=False, indent=1)
         os.replace(tmp, _path(lang))
     except OSError as e:
         print(f"[ui_i18n] could not save labels for {lang}: {e}", flush=True)
     return True
+
+
+_inflight = set()
+
+
+def ensure_async(lang):
+    """足りない文言を裏で補う（画面は待たせない。次の表示から反映）"""
+    if lang in UI_LABELS or lang in _inflight or has_labels(lang):
+        return
+    if time.time() - _failed_at.get(lang, 0) < RETRY_AFTER:
+        return
+    _inflight.add(lang)
+
+    def run():
+        try:
+            ensure_ui_labels(lang)
+        finally:
+            _inflight.discard(lang)
+
+    threading.Thread(target=run, daemon=True).start()
 
 
 def all_languages():

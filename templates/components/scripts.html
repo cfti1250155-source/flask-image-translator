@@ -1,12 +1,17 @@
 <script>
+    // 本体JSの読み込み前にタップされても落ちないよう、仮のタブ切り替えを置く（app.js が上書きする）
+    var __pendingTab = null;
+    function switchTab(t) { __pendingTab = t; }
     // Jinjaテンプレートからの変数渡しの定義
     const UI = {{ ui|tojson }};
     const SOURCE_CODE = {{ source_code|tojson }};
     const INITIAL_TAB = {{ active_mode|tojson }};
     const RESULT = {{ result_entry|tojson }};
+    const OVERLAY_BLOCKS = {{ overlay_blocks|tojson }};
     const LANGS = {{ lang_list|tojson }};
     const UI_LANG = {{ ui_lang|tojson }};
     const TARGET_LANG = {{ target_lang|tojson }};
+    const PHRASE_LANGS = {{ phrase_langs|tojson }};
     const DEFAULT_CONV = { A: {{ ui_lang|tojson }}, B: {{ target_lang|tojson }} };
 
     const $ = (id) => document.getElementById(id);
@@ -15,7 +20,15 @@
 </script>
 
 <!-- 分割した外部JSファイルを読み込み -->
-<script src="{{ url_for('static', filename='js/storage.js') }}"></script>
-<script src="{{ url_for('static', filename='js/media.js') }}"></script>
-<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
-<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/storage.js', v=asset_v) }}"></script>
+<script src="{{ url_for('static', filename='js/settings.js', v=asset_v) }}"></script>
+<script src="{{ url_for('static', filename='js/display.js', v=asset_v) }}"></script>
+<script src="{{ url_for('static', filename='js/media.js', v=asset_v) }}"></script>
+<script src="{{ url_for('static', filename='js/chat.js', v=asset_v) }}"></script>
+<script src="{{ url_for('static', filename='js/history.js', v=asset_v) }}"></script>
+<script src="{{ url_for('static', filename='js/phrasebook.js', v=asset_v) }}"></script>
+<script src="{{ url_for('static', filename='js/backup.js', v=asset_v) }}"></script>
+<script src="{{ url_for('static', filename='js/overlay.js', v=asset_v) }}"></script>
+<script src="{{ url_for('static', filename='js/study.js', v=asset_v) }}"></script>
+<script src="{{ url_for('static', filename='js/app.js', v=asset_v) }}"></script>
+<script src="{{ url_for('static', filename='js/pwa.js', v=asset_v) }}"></script>

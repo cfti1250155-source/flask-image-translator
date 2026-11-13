@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="{{ ui_code }}" dir="{{ 'rtl' if ui_rtl else 'ltr' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{{ ui.offline_title }} - TOOKIE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=asset_v) }}">
+    {% include 'components/pwa_head.html' %}
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-start justify-center px-4">
+    <div class="max-w-xl w-full bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 p-5 md:p-7 my-4 space-y-4">
+        <!-- ロゴ部分（画像名修正 ＆ 翻訳除外） -->
+        <div class="flex items-center gap-2.5" translate="no">
+            <img src="{{ url_for('static', filename='icon-192.png', v=asset_v) }}" alt="TOOKIE" class="w-9 h-9 rounded-xl object-cover border border-slate-700/50 shadow">
+            <span class="text-lg font-extrabold text-white tracking-wider">TOOKIE</span>
+        </div>
+
+        <!-- オフライン通知（w-fullを追加して縦潰れを防止） -->
+        <div class="rounded-2xl bg-amber-950/30 border border-amber-900/60 p-3 space-y-2 w-full">
+            <p id="offline-status" class="text-sm font-semibold text-amber-200"><i class="fa-solid fa-plane"></i> {{ ui.offline_title }}</p>
+            <p class="text-xs text-slate-300 leading-relaxed">{{ ui.offline_hint }}</p>
+            <a href="{{ url_for('index') }}" onclick="leaveOffline(event)" class="block text-center bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl py-2 transition">{{ ui.offline_retry }}</a>
+        </div>
+
+        {% include 'components/history_tab.html' %}
+    </div>
+
+    <script>
+        window.IS_OFFLINE_PAGE = true;
+        const UI = {{ ui|tojson }};
+        const LANGS = {{ lang_list|tojson }};
+        const UI_LANG = {{ ui_lang|tojson }};
+        const TARGET_LANG = {{ target_lang|tojson }};
+        const PHRASE_LANGS = {{ phrase_langs|tojson }};
+        const $ = (id) => document.getElementById(id);
+        const langByName = (name) => LANGS.find(l => l.name === name);
+        const codeOf = (name) => (langByName(name) || {}).code || 'en-US';
+    </script>
+    <script src="{{ url_for('static', filename='js/storage.js', v=asset_v) }}"></script>
+    <script src="{{ url_for('static', filename='js/settings.js', v=asset_v) }}"></script>
+    <script src="{{ url_for('static', filename='js/media.js', v=asset_v) }}"></script>
+    <script src="{{ url_for('static', filename='js/history.js', v=asset_v) }}"></script>
+    <script src="{{ url_for('static', filename='js/phrasebook.js', v=asset_v) }}"></script>
+    <script src="{{ url_for('static', filename='js/study.js', v=asset_v) }}"></script>
+    <script src="{{ url_for('static', filename='js/backup.js', v=asset_v) }}"></script>
+    <script src="{{ url_for('static', filename='js/offline.js', v=asset_v) }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js', v=asset_v) }}"></script>
+</body>
+</html>

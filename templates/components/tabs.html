@@ -4,8 +4,9 @@
 <div id="tab-text" class="tab-content space-y-4">
     <form action="/" method="POST" class="tx-form space-y-3">
         <input type="hidden" name="mode" value="text">
+        <input type="hidden" name="formality" value="auto"><input type="hidden" name="pron" value="0">
         <input type="hidden" name="glossary" value="[]">
-        <textarea name="direct_text" dir="auto" rows="5" maxlength="5000" class="w-full p-4 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-600 resize-none shadow-inner" placeholder="{{ ui.text_placeholder }}">{{ input_text if active_mode == 'text' else '' }}</textarea>
+        <textarea name="direct_text" dir="auto" rows="5" required maxlength="5000" class="w-full p-4 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-600 resize-none shadow-inner" placeholder="{{ ui.text_placeholder }}">{{ input_text if active_mode == 'text' else '' }}</textarea>
         <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold py-3 px-4 rounded-2xl shadow-lg transition active:scale-[0.99] flex items-center justify-center gap-2">
             <i class="fa-solid fa-paper-plane"></i> <span class="btn-label">{{ ui.btn_text_translate }}</span>
         </button>
@@ -17,21 +18,38 @@
 <div id="tab-image" class="tab-content hidden space-y-4">
     <form action="/" method="POST" enctype="multipart/form-data" class="tx-form space-y-4">
         <input type="hidden" name="mode" value="image">
+        <input type="hidden" name="overlay" value="1">
+        <input type="hidden" name="formality" value="auto"><input type="hidden" name="pron" value="0">
         <div class="flex flex-col items-center justify-center w-full">
             <label class="flex flex-col items-center justify-center w-full h-40 border-2 border-slate-700 border-dashed rounded-2xl cursor-pointer bg-slate-950/40 hover:bg-slate-800/40 transition">
                 <div class="flex flex-col items-center justify-center p-4 text-center">
                     <i class="fa-solid fa-image text-3xl text-indigo-400 mb-2"></i>
-                    <p class="text-sm text-slate-300 font-medium">{{ ui.image_input_label }}</p>
-                    <p class="text-xs text-slate-500 mt-1">PNG, JPG, WEBP, HEIC</p>
+                    <p class="text-sm text-slate-300 font-medium">{{ ui.file_input_label }}</p>
+                    <p class="text-xs text-slate-500 mt-1">PNG, JPG, WEBP, HEIC, PDF</p>
                 </div>
-                <input type="file" name="image" accept="image/*" required class="hidden" onchange="document.getElementById('img-file-name').textContent = this.files[0] ? this.files[0].name : ''">
+                <input type="file" name="image" accept="image/*,application/pdf,.pdf" required class="hidden" onchange="document.getElementById('img-file-name').textContent = this.files[0] ? this.files[0].name : ''">
             </label>
             <p id="img-file-name" class="text-xs text-indigo-400 mt-2 h-4 font-medium break-all"></p>
+            <p class="text-[11px] text-slate-500 mt-1 text-center">{{ ui.pdf_hint|replace('{m}', pdf_max_pages|string) }}</p>
+
+            <!-- 重ね翻訳: 選んだ画像の上に訳文を重ねて表示する（結果が返ったあとに表示） -->
+            <div id="overlay-box" class="hidden w-full mt-3 space-y-2">
+                <div id="overlay-stage" class="ov-stage relative w-full rounded-2xl overflow-hidden border border-slate-800 bg-black">
+                    <img id="overlay-img" class="block w-full h-auto" alt="">
+                    <div id="overlay-layer" class="ov-layer absolute inset-0"></div>
+                </div>
+                <div id="overlay-list" class="hidden space-y-1.5 text-left"></div>
+                <div class="flex items-center justify-between gap-2">
+                    <p class="text-[11px] text-slate-500 text-left">{{ ui.ov_hint }}</p>
+                    <button type="button" id="overlay-toggle" onclick="toggleOverlay()" class="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"></button>
+                </div>
+            </div>
         </div>
         <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold py-3 px-4 rounded-2xl shadow-lg transition active:scale-[0.99] flex items-center justify-center gap-2">
-            <i class="fa-solid fa-file-invoice"></i> <span class="btn-label">{{ ui.btn_image_translate }}</span>
+            <i class="fa-solid fa-file-invoice"></i> <span class="btn-label">{{ ui.btn_file_translate }}</span>
         </button>
     </form>
+    <div id="pdf-result" class="hidden space-y-2 text-left"></div>
     {{ result_box('image', show_original=true) }}
 </div>
 
@@ -46,6 +64,7 @@
 
     <form id="voice-form" action="/" method="POST" class="tx-form space-y-3 {{ '' if (active_mode == 'voice' and input_text) else 'hidden' }}">
         <input type="hidden" name="mode" value="voice">
+        <input type="hidden" name="formality" value="auto"><input type="hidden" name="pron" value="0">
         <input type="hidden" name="glossary" value="[]">
         <textarea id="voice_text" name="voice_text" dir="auto" rows="3" maxlength="5000" class="w-full p-3 rounded-2xl bg-slate-950/70 text-slate-100 border border-slate-800" placeholder="{{ ui.voice_placeholder }}">{{ input_text if active_mode == 'voice' else '' }}</textarea>
         <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-2xl shadow-lg transition text-sm">
@@ -68,6 +87,7 @@
 
     <form id="camera-form" action="/" method="POST" class="tx-form space-y-3">
         <input type="hidden" name="mode" value="camera">
+        <input type="hidden" name="formality" value="auto"><input type="hidden" name="pron" value="0">
         <input type="hidden" id="camera_data" name="camera_data" value="">
         <div class="flex gap-2">
             <button type="button" onclick="startCamera()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 px-3 rounded-2xl text-xs transition border border-slate-700 flex items-center justify-center gap-2">
@@ -100,6 +120,7 @@
 
     <div id="conv-log" class="space-y-2 max-h-72 overflow-y-auto"></div>
     <p id="conv-empty" class="text-center text-xs text-slate-600 py-3">{{ ui.conv_empty }}</p>
+    <p id="conv-warn" role="status" class="hidden text-xs text-amber-200 bg-amber-950/30 border border-amber-900/50 rounded-xl p-2 text-center">{{ ui.warn_same_chat }}</p>
     <p id="conv-status" class="text-xs text-slate-400 text-center min-h-[1rem]"></p>
 
     <form onsubmit="return convSend(event)" class="flex gap-1.5 items-center">
@@ -124,37 +145,4 @@
     </button>
 </div>
 
-<!-- 6. 履歴・お気に入り・用語集（この端末の localStorage に保存） -->
-<div id="tab-history" class="tab-content hidden space-y-3">
-    <div class="flex items-center justify-between gap-2">
-        <div class="flex gap-1 flex-wrap">
-            <button type="button" id="hf-all" onclick="setHistFilter('all')" class="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition">{{ ui.filter_all }}</button>
-            <button type="button" id="hf-fav" onclick="setHistFilter('fav')" class="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition"><i class="fa-solid fa-star text-yellow-400"></i> {{ ui.filter_fav }}</button>
-            <button type="button" id="hf-gl" onclick="setHistFilter('gl')" class="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition"><i class="fa-solid fa-book"></i> {{ ui.filter_glossary }}</button>
-        </div>
-        <button type="button" id="history-clear-btn" onclick="clearHistory()" class="text-xs text-slate-400 hover:text-red-300 transition flex-shrink-0"><i class="fa-solid fa-trash"></i> {{ ui.clear_history }}</button>
-    </div>
-    <p class="text-[11px] text-slate-500">{{ ui.history_note }}</p>
-
-    <div id="history-section" class="space-y-2">
-        <div id="history-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
-        <p id="history-empty" class="hidden text-center text-sm text-slate-500 py-6">{{ ui.history_empty }}</p>
-    </div>
-
-    <div id="glossary-section" class="hidden space-y-3">
-        <p class="text-[11px] text-slate-400">{{ ui.glossary_hint }}</p>
-        <form onsubmit="return addGlossaryTerm(event)" class="space-y-2">
-            <input id="gl-term" type="text" dir="auto" maxlength="100" required autocomplete="off" placeholder="{{ ui.glossary_term }}"
-                   class="w-full px-3 py-2 rounded-xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-600 text-sm">
-            <input id="gl-meaning" type="text" dir="auto" maxlength="200" required autocomplete="off" placeholder="{{ ui.glossary_meaning }}"
-                   class="w-full px-3 py-2 rounded-xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-600 text-sm">
-            <div class="flex gap-2 items-center">
-                <span class="text-[11px] text-slate-400 flex-shrink-0">{{ ui.glossary_target }}</span>
-                <select id="gl-to" class="min-w-0 flex-1 bg-slate-800 text-slate-100 text-sm rounded-xl px-2 py-2 border border-slate-700"></select>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition flex-shrink-0">{{ ui.glossary_add }}</button>
-            </div>
-        </form>
-        <div id="glossary-list" class="space-y-2 max-h-72 overflow-y-auto"></div>
-        <p id="glossary-empty" class="hidden text-center text-sm text-slate-500 py-4">{{ ui.glossary_empty }}</p>
-    </div>
-</div>
+{% include 'components/history_tab.html' %}

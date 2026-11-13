@@ -9,15 +9,17 @@ function unlockTTS() {
 function speak(text, lang) {
     if (!hasTTS) { alert(UI.err_tts); return; }
     if (!text) return;
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = lang || 'en-US';
-    const want = u.lang.toLowerCase().replace('_', '-');
-    const voices = speechSynthesis.getVoices();
-    const v = voices.find(v => (v.lang || '').toLowerCase().replace('_', '-') === want)
-           || voices.find(v => (v.lang || '').toLowerCase().split('-')[0] === want.split('-')[0]);
-    if (v) u.voice = v;
-    speechSynthesis.speak(u);
+    try {  // 読み上げの失敗で翻訳結果の表示が壊れないようにする
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = lang || 'en-US';
+        const want = u.lang.toLowerCase().replace('_', '-');
+        const voices = speechSynthesis.getVoices();
+        const v = voices.find(v => (v.lang || '').toLowerCase().replace('_', '-') === want)
+               || voices.find(v => (v.lang || '').toLowerCase().split('-')[0] === want.split('-')[0]);
+        if (v) u.voice = v;
+        speechSynthesis.speak(u);
+    } catch (e) {}
 }
 
 function speakResult(elementId) {

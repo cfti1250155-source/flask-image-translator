@@ -1,25 +1,29 @@
 import base64
 import binascii
-from collections import defaultdict, deque
 import json
 import re
-import time
 
-from flask import render_template, request, session
+from flask import jsonify, render_template, request, session
 from languages import (
     AUTO, LANGUAGES, get_lang_code, get_native_name, is_rtl,
     is_supported,
 )
-from translator import TranslationError
+from limits import limiter, stats
+from phrasebook import available_languages
+from translator import PDF_MAX_PAGES, TranslationError
 from ui_i18n import get_ui_labels
 
 MAX_TEXT_LEN = 5000
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
 VALID_MODES = {"text", "image", "voice", "camera"}
 
-# レート制限（IPごと 1分に20回まで）
-RATE_LIMIT, RATE_WINDOW = 20, 60
-_hits = defaultdict(deque)
+# エラーラベル → HTTPステータス
+ERROR_STATUS = {
+    "err_empty": 400, "err_too_long": 400, "err_image": 400, "err_no_text": 422,
+    "err_blocked": 422, "err_pdf": 400, "err_pdf_big": 413, "err_rate": 429, "err_daily": 429,
+    "err_quota": 503, "err_overloaded": 503, "err_no_key": 503, "err_api_key": 503,
+    "err_timeout": 504, "err_connection": 502, "err_failed": 502,
+}
 
 
 def client_ip():
@@ -27,14 +31,19 @@ def client_ip():
     return (fwd.split(",")[0].strip() if fwd else request.remote_addr) or "unknown"
 
 
-def rate_ok():
-    now, q = time.time(), _hits[client_ip()]
-    while q and now - q[0] > RATE_WINDOW:
-        q.popleft()
-    if len(q) >= RATE_LIMIT:
-        return False
-    q.append(now)
-    return True
+def guard():
+    """翻訳APIを呼ぶ前の利用制限チェック。問題なければ何もせず、超過なら TranslationError"""
+    key = limiter.check(client_ip())
+    if key:
+        raise TranslationError(key)
+
+
+def track(kind, key="ok"):
+    stats.record(kind, key)
+
+
+def api_error(ui, key, status=None):
+    return jsonify(error=ui.get(key, key), key=key), status or ERROR_STATUS.get(key, 502)
 
 
 def get_langs():
@@ -118,6 +127,12 @@ def render_main(status=200, **ctx):
         input_text="",
         error=None,
         result_entry=None,
+        pronunciation=None,
+        overlay_blocks=None,
+        pdf_max_pages=PDF_MAX_PAGES,
+        same_detected=False,
+        same_lang=(source_lang == target_lang),
+        phrase_langs=available_languages(),
         lang_list=[{"name": l["name"], "code": l["code"], "native": l["native"]} for l in LANGUAGES],
     )
     base.update(ctx)
@@ -144,3 +159,17 @@ def read_upload():
     if not data:
         raise TranslationError("err_image")
     return data, f.mimetype
+
+
+def read_pdf_upload(field="file"):
+    """アップロードされたPDFを読む。問題があれば TranslationError"""
+    from translator import PDF_MAX_BYTES
+    f = request.files.get(field)
+    if not f or not f.filename:
+        raise TranslationError("err_pdf")
+    data = f.read(PDF_MAX_BYTES + 1)
+    if len(data) > PDF_MAX_BYTES:
+        raise TranslationError("err_pdf_big")
+    if not data.startswith(b"%PDF"):
+        raise TranslationError("err_pdf")
+    return data

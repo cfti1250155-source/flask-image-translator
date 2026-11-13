@@ -1,0 +1,224 @@
+[
+ {
+  "id": "basic",
+  "ja": "あいさつ・基本",
+  "en": "Basics",
+  "phrases": [
+   {
+    "id": "hello",
+    "ja": "こんにちは",
+    "en": "Hello"
+   },
+   {
+    "id": "thanks",
+    "ja": "ありがとうございます",
+    "en": "Thank you very much"
+   },
+   {
+    "id": "excuse",
+    "ja": "すみません（呼びかけ）",
+    "en": "Excuse me"
+   },
+   {
+    "id": "sorry",
+    "ja": "ごめんなさい",
+    "en": "I'm sorry"
+   },
+   {
+    "id": "dontunderstand",
+    "ja": "わかりません",
+    "en": "I don't understand"
+   },
+   {
+    "id": "slowly",
+    "ja": "もう少しゆっくり話してください",
+    "en": "Could you speak more slowly, please?"
+   }
+  ]
+ },
+ {
+  "id": "food",
+  "ja": "食事",
+  "en": "Food",
+  "phrases": [
+   {
+    "id": "table2",
+    "ja": "2人です",
+    "en": "A table for two, please"
+   },
+   {
+    "id": "menu",
+    "ja": "メニューを見せてください",
+    "en": "Can I see the menu, please?"
+   },
+   {
+    "id": "recommend",
+    "ja": "おすすめは何ですか？",
+    "en": "What do you recommend?"
+   },
+   {
+    "id": "allergy",
+    "ja": "ピーナッツアレルギーです",
+    "en": "I'm allergic to peanuts"
+   },
+   {
+    "id": "check",
+    "ja": "お会計をお願いします",
+    "en": "The check, please"
+   },
+   {
+    "id": "delicious",
+    "ja": "とてもおいしいです",
+    "en": "This is delicious"
+   }
+  ]
+ },
+ {
+  "id": "travel",
+  "ja": "移動",
+  "en": "Getting around",
+  "phrases": [
+   {
+    "id": "station",
+    "ja": "駅はどこですか？",
+    "en": "Where is the station?"
+   },
+   {
+    "id": "toilet",
+    "ja": "トイレはどこですか？",
+    "en": "Where is the toilet?"
+   },
+   {
+    "id": "fare",
+    "ja": "運賃はいくらですか？",
+    "en": "How much is the fare?"
+   },
+   {
+    "id": "airportbus",
+    "ja": "このバスは空港に行きますか？",
+    "en": "Does this bus go to the airport?"
+   },
+   {
+    "id": "address",
+    "ja": "この住所までお願いします",
+    "en": "Please take me to this address"
+   },
+   {
+    "id": "stophere",
+    "ja": "ここで止めてください",
+    "en": "Please stop here"
+   }
+  ]
+ },
+ {
+  "id": "shop",
+  "ja": "買い物",
+  "en": "Shopping",
+  "phrases": [
+   {
+    "id": "howmuch",
+    "ja": "これはいくらですか？",
+    "en": "How much is this?"
+   },
+   {
+    "id": "othersize",
+    "ja": "別のサイズはありますか？",
+    "en": "Do you have this in another size?"
+   },
+   {
+    "id": "card",
+    "ja": "クレジットカードは使えますか？",
+    "en": "Can I pay by credit card?"
+   },
+   {
+    "id": "takethis",
+    "ja": "これをください",
+    "en": "I'll take this one"
+   },
+   {
+    "id": "receipt",
+    "ja": "レシートをください",
+    "en": "Could I have a receipt, please?"
+   },
+   {
+    "id": "lookingonly",
+    "ja": "見ているだけです",
+    "en": "I'm just looking, thank you"
+   }
+  ]
+ },
+ {
+  "id": "hotel",
+  "ja": "宿泊",
+  "en": "Hotel",
+  "phrases": [
+   {
+    "id": "reservation",
+    "ja": "予約しています",
+    "en": "I have a reservation"
+   },
+   {
+    "id": "checkin",
+    "ja": "チェックインをお願いします",
+    "en": "I'd like to check in, please"
+   },
+   {
+    "id": "checkout",
+    "ja": "チェックアウトは何時ですか？",
+    "en": "What time is check-out?"
+   },
+   {
+    "id": "breakfast",
+    "ja": "朝食は付いていますか？",
+    "en": "Is breakfast included?"
+   },
+   {
+    "id": "wifi",
+    "ja": "Wi-Fiは使えますか？",
+    "en": "Is there Wi-Fi?"
+   },
+   {
+    "id": "taxi",
+    "ja": "タクシーを呼んでください",
+    "en": "Could you call a taxi, please?"
+   }
+  ]
+ },
+ {
+  "id": "emergency",
+  "ja": "緊急・体調",
+  "en": "Emergency",
+  "phrases": [
+   {
+    "id": "help",
+    "ja": "助けてください！",
+    "en": "Help!"
+   },
+   {
+    "id": "ambulance",
+    "ja": "救急車を呼んでください",
+    "en": "Please call an ambulance"
+   },
+   {
+    "id": "police",
+    "ja": "警察を呼んでください",
+    "en": "Please call the police"
+   },
+   {
+    "id": "doctor",
+    "ja": "医者が必要です",
+    "en": "I need a doctor"
+   },
+   {
+    "id": "passport",
+    "ja": "パスポートをなくしました",
+    "en": "I've lost my passport"
+   },
+   {
+    "id": "sick",
+    "ja": "気分が悪いです",
+    "en": "I feel sick"
+   }
+  ]
+ }
+]

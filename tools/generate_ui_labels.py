@@ -1,21 +1,11 @@
-"""全言語の画面文言を事前生成して ui_labels/ に保存するスクリプト。
-
-使い方（プロジェクトのルートで）:
-    export GEMINI_API_KEY=...        # Windowsは set GEMINI_API_KEY=...
-    pip install -r requirements.txt
-    python tools/generate_ui_labels.py            # 未生成の言語だけ作る
-    python tools/generate_ui_labels.py --force    # 全言語を作り直す
-
-生成した ui_labels/*.json をコミットしておけば、デプロイ後に初回の待ち時間が出ません。
-母語話者に確認してもらうと品質が上がります（JSONを直接編集して構いません）。
-"""
 import os
 import sys
+import time  # ★ 追加
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import ui_i18n  # noqa: E402
-from languages import LANGUAGES, UI_LABELS  # noqa: E402
+import ui_i18n
+from languages import LANGUAGES, UI_LABELS
 
 
 def main():
@@ -42,6 +32,9 @@ def main():
         else:
             failed += 1
             print("FAILED")
+
+        time.sleep(1.5)  # ★ ここに待機時間を追加（1.5秒）
+
     print(f"done: {ok} generated, {skipped} skipped, {failed} failed")
     sys.exit(1 if failed else 0)
 

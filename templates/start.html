@@ -1,19 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Choose your language</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% include 'components/pwa_head.html' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=asset_v) }}">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center px-4">
     <div class="max-w-md w-full bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-2xl space-y-5 my-6">
         <div class="space-y-3">
             <!-- 左にアイコン、右にタイトル・サブタイトル -->
-            <div class="flex items-center justify-center gap-3.5">
-                <img src="{{ url_for('static', filename='Tookie icon.png') }}" 
+            <div class="flex items-center justify-center gap-3.5" translate="no">
+                <img src="{{ url_for('static', filename='icon-192.png', v=asset_v) }}" 
                      alt="TOOKIE Logo" 
                      class="w-14 h-14 rounded-2xl object-cover shadow-lg border border-slate-700/50">
                 <div class="text-left">
@@ -25,17 +26,18 @@
         </div>
 
         <form id="start-form" action="{{ url_for('set_display_language') }}" method="POST" class="space-y-4">
-            <!-- 接続モード（オフラインは準備中） -->
-            <fieldset class="grid grid-cols-2 gap-2">
+            <!-- 接続モード（選んだ方で動きます。あとから言語設定画面で変えられます） -->
+            <fieldset id="mode-box" class="grid grid-cols-2 gap-2">
                 <legend class="sr-only">Connection</legend>
-                <label class="flex items-center gap-2 p-3 rounded-xl border border-indigo-500 bg-indigo-950/40 text-sm font-semibold cursor-pointer">
+                <label data-mode="online" class="mode-opt flex items-center gap-2 p-3 rounded-xl border border-indigo-500 bg-indigo-950/40 text-sm font-semibold cursor-pointer">
                     <input type="radio" name="network_mode" value="online" checked class="accent-indigo-500">
-                    <i class="fa-solid fa-wifi text-indigo-400"></i> Online
+                    <i class="fa-solid fa-wifi text-indigo-400"></i>
+                    <span class="leading-tight">Online<br><span class="text-[10px] font-normal text-slate-400">Translate with AI</span></span>
                 </label>
-                <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-800 bg-slate-950/40 text-sm text-slate-500 cursor-not-allowed">
-                    <input type="radio" name="network_mode" value="offline" disabled class="accent-indigo-500">
-                    <i class="fa-solid fa-plane"></i>
-                    <span class="leading-tight">Offline<br><span class="text-[10px]">Coming soon</span></span>
+                <label data-mode="offline" class="mode-opt flex items-center gap-2 p-3 rounded-xl border border-slate-800 bg-slate-950/40 text-sm font-semibold cursor-pointer">
+                    <input type="radio" name="network_mode" value="offline" class="accent-indigo-500">
+                    <i class="fa-solid fa-plane text-indigo-400"></i>
+                    <span class="leading-tight">Offline<br><span class="text-[10px] font-normal text-slate-400">History &amp; phrasebook</span></span>
                 </label>
             </fieldset>
 
@@ -67,6 +69,7 @@
         <p class="text-sm text-slate-300">Preparing your language...</p>
     </div>
 
+    <script src="{{ url_for('static', filename='js/pwa.js', v=asset_v) }}"></script>
     <script>
         const input = document.getElementById('start-search');
         input.addEventListener('input', () => {
@@ -79,9 +82,40 @@
             });
             document.getElementById('start-empty').classList.toggle('hidden', shown > 0);
         });
+        // 検索欄で Enter を押したとき、先頭の言語（日本語）が勝手に選ばれないよう、絞り込み結果の先頭を選ぶ
+        input.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            const first = Array.from(document.querySelectorAll('.start-opt')).find(el => !el.classList.contains('hidden'));
+            if (first) first.click();
+        });
         // 初回は画面文言の自動翻訳に数秒かかることがあるため、待機表示を出す
         document.getElementById('start-form').addEventListener('submit', () => {
             document.getElementById('start-loading').classList.remove('hidden');
+        });
+
+        // オンライン／オフラインの選択。選んだ方を端末に覚えさせ、Service Worker もそれに従う
+        const startForm = document.getElementById('start-form');
+        function paintMode() {
+            const cur = startForm.querySelector('input[name=network_mode]:checked').value;
+            document.querySelectorAll('.mode-opt').forEach(el => {
+                const on = el.dataset.mode === cur;
+                el.classList.toggle('border-indigo-500', on); el.classList.toggle('bg-indigo-950/40', on);
+                el.classList.toggle('border-slate-800', !on); el.classList.toggle('bg-slate-950/40', !on);
+            });
+        }
+        const saved = window.getNetMode ? window.getNetMode() : 'online';
+        startForm.querySelector('input[name=network_mode][value=' + saved + ']').checked = true;
+        startForm.querySelectorAll('input[name=network_mode]').forEach(r => r.addEventListener('change', paintMode));
+        paintMode();
+        let modeSaved = false;
+        startForm.addEventListener('submit', async (e) => {
+            if (modeSaved) return;
+            e.preventDefault();
+            const submitter = e.submitter;
+            try { await Promise.race([window.setNetMode(startForm.querySelector('input[name=network_mode]:checked').value), new Promise(r => setTimeout(r, 1500))]); } catch (err) {}
+            modeSaved = true;
+            startForm.requestSubmit(submitter);
         });
     </script>
 </body>

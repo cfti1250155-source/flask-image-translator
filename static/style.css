@@ -5,4 +5,62 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Helveti
 /* iPhone のホームバー・ノッチ対策 */
 body { padding-bottom: max(1rem, env(safe-area-inset-bottom)); padding-top: max(1rem, env(safe-area-inset-top)); }
 /* iOS Safari は 16px 未満の入力欄でズームするため防ぐ */
-textarea, input { font-size: 16px; }
+select, textarea, input:not([type=checkbox]):not([type=radio]) { font-size: 16px !important; }
+
+/* ---- 文字サイズ（Tailwind の text-[10px] などpx指定の小さい文字も大きくする） ---- */
+html[data-fs] .text-\[10px\] { font-size: .65rem !important; }
+html[data-fs] .text-\[11px\] { font-size: .72rem !important; }
+html[data-fs=xl] .text-\[10px\] { font-size: .75rem !important; }
+html[data-fs=xl] .text-\[11px\] { font-size: .82rem !important; }
+
+/* ---- 大きく表示（相手に見せる） ---- */
+.big-overlay {
+    position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: #000; color: #fff; padding: max(1rem, env(safe-area-inset-top)) 1.25rem max(1rem, env(safe-area-inset-bottom));
+}
+.big-box { width: 100%; flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.big-text { width: 100%; text-align: center; font-weight: 700; line-height: 1.25; white-space: pre-wrap; overflow-wrap: anywhere; }
+.big-pron { flex: 0 0 auto; margin-top: .75rem; font-size: 1.1rem; opacity: .75; text-align: center; white-space: pre-wrap; max-height: 20vh; overflow: auto; }
+.big-close {
+    position: absolute; top: max(.75rem, env(safe-area-inset-top)); right: .75rem; width: 2.75rem; height: 2.75rem;
+    border-radius: 9999px; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.12); color: inherit; font-size: 1.1rem;
+}
+html[data-theme=light] .big-overlay { background: #fff; color: #0f172a; }
+html[data-theme=light] .big-close { border-color: rgba(15,23,42,.3); background: rgba(15,23,42,.08); }
+
+/* ---- ライト配色（既定はダーク。Tailwind の色クラスを上書きする） ---- */
+html[data-theme=light] body.bg-slate-950, html[data-theme=light] body { background: #f1f5f9 !important; color: #0f172a !important; }
+html[data-theme=light] [class*="bg-slate-950"] { background-color: #f8fafc !important; }
+html[data-theme=light] [class*="bg-slate-900"] { background-color: #ffffff !important; }
+html[data-theme=light] [class*="bg-slate-800"] { background-color: #e2e8f0 !important; }
+html[data-theme=light] [class*="hover:bg-slate-700"]:hover { background-color: #cbd5e1 !important; }
+html[data-theme=light] [class*="border-slate-"] { border-color: #cbd5e1 !important; }
+html[data-theme=light] .text-white:not([class*="bg-indigo-"]):not([class*="bg-emerald-"]):not([class*="bg-red-"]):not([class*="from-indigo-"]) { color: #0f172a !important; }
+html[data-theme=light] .text-slate-100, html[data-theme=light] .text-slate-200 { color: #0f172a !important; }
+html[data-theme=light] .text-slate-300 { color: #334155 !important; }
+html[data-theme=light] .text-slate-400 { color: #475569 !important; }
+html[data-theme=light] .text-slate-500, html[data-theme=light] .text-slate-600 { color: #64748b !important; }
+html[data-theme=light] .text-indigo-100, html[data-theme=light] .text-indigo-200 { color: #312e81 !important; }
+html[data-theme=light] .text-indigo-300, html[data-theme=light] .text-indigo-400 { color: #4338ca !important; }
+html[data-theme=light] .text-emerald-200, html[data-theme=light] .text-emerald-400 { color: #047857 !important; }
+html[data-theme=light] .text-amber-100, html[data-theme=light] .text-amber-200 { color: #92400e !important; }
+html[data-theme=light] .text-red-200, html[data-theme=light] .text-red-300 { color: #b91c1c !important; }
+html[data-theme=light] [class*="bg-indigo-950"] { background-color: #e0e7ff !important; }
+html[data-theme=light] [class*="bg-emerald-950"] { background-color: #d1fae5 !important; }
+html[data-theme=light] [class*="bg-amber-950"] { background-color: #fef3c7 !important; }
+html[data-theme=light] [class*="bg-red-950"] { background-color: #fee2e2 !important; }
+html[data-theme=light] [class*="border-indigo-"], html[data-theme=light] [class*="border-emerald-"],
+html[data-theme=light] [class*="border-amber-"], html[data-theme=light] [class*="border-red-"] { border-color: #c7d2fe !important; }
+html[data-theme=light] [class*="placeholder-slate-"]::placeholder { color: #94a3b8 !important; }
+html[data-theme=light] .set-opt[aria-pressed=true] { color: #fff !important; }
+html[data-theme=light] .set-opt[aria-pressed=true] { background-color: #4f46e5 !important; }
+
+/* ---- 画像の重ね翻訳 ---- */
+.ov-block {
+    position: absolute; display: flex; align-items: center; justify-content: center; text-align: center;
+    overflow: hidden; padding: 1px 2px; line-height: 1.1; font-weight: 700; cursor: pointer; box-sizing: border-box;
+    background: rgba(15, 23, 42, .84); color: #fff; border-radius: 3px; overflow-wrap: anywhere;
+}
+.ov-block.ov-src { background: rgba(120, 53, 15, .88); }
+.ov-stage { position: relative; }
+.ov-layer { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }

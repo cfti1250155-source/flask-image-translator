@@ -4,6 +4,9 @@ import secrets
 
 from flask import Flask
 
+import hashlib
+
+from limits import start_keepalive
 from routes import register_routes
 
 app = Flask(__name__)
@@ -22,8 +25,32 @@ app.config.update(
     SESSION_COOKIE_SECURE=not os.environ.get("FLASK_DEBUG"),
 )
 
+
+
+def _asset_version():
+    """static の中身から作る版番号。JS/CSSを更新したとき古いキャッシュを使わせない"""
+    h = hashlib.md5()
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    for base, _dirs, files in sorted(os.walk(root)):
+        for name in sorted(files):
+            with open(os.path.join(base, name), "rb") as f:
+                h.update(f.read())
+    return h.hexdigest()[:8]
+
+
+ASSET_V = _asset_version()
+
+
+@app.context_processor
+def _inject_asset_version():
+    return {"asset_v": ASSET_V}
+
+
+app.config["ASSET_V"] = ASSET_V
+
 # ルートの登録
 register_routes(app)
+start_keepalive()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

@@ -1,7 +1,3 @@
-const CKEY = 'tl_conv_langs_v1';
-const CHATKEY = 'tl_chat_v1';
-const PREFKEY = 'tl_chat_prefs_v1';
-
 let convLangs = Object.assign({}, DEFAULT_CONV);
 try {
     const saved = JSON.parse(localStorage.getItem(CKEY) || 'null');
@@ -26,16 +22,6 @@ function setSpeaker(side) {
     $('conv-input').lang = codeOf(convLangs[side]);
     $('conv-send').className = 'w-11 h-11 flex-shrink-0 text-white rounded-full flex items-center justify-center transition ' +
         (side === 'A' ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-emerald-600 hover:bg-emerald-500');
-}
-
-function loadChat() {
-    try {
-        const a = JSON.parse(localStorage.getItem(CHATKEY) || '[]');
-        return Array.isArray(a) ? a : [];
-    } catch (e) { return []; }
-}
-function saveChat(list) {
-    try { localStorage.setItem(CHATKEY, JSON.stringify(list.slice(-100))); } catch (e) {}
 }
 
 const setConvStatus = (t) => { $('conv-status').textContent = t || ''; };
@@ -64,6 +50,11 @@ function buildBubble(msg) {
         (isA ? 'text-indigo-200' : 'text-emerald-200');
     trans.textContent = msg.out || '…';
 
+    const pron = document.createElement('div');
+    pron.dir = 'auto';
+    pron.className = 'text-xs text-slate-400 whitespace-pre-wrap break-words' + (msg.pron ? '' : ' hidden');
+    pron.textContent = msg.pron || '';
+
     const actions = document.createElement('div');
     actions.className = 'flex justify-end gap-1';
     const note = document.createElement('div');
@@ -73,6 +64,9 @@ function buildBubble(msg) {
     function addActions() {
         actions.replaceChildren(
             iconBtn('fa-solid fa-volume-high', UI.speak, () => speak(msg.out, msg.tcode)),
+            iconBtn('fa-regular fa-bookmark', UI.vocab_save, (ev) => saveVocabEntry(
+                { src: msg.src, out: msg.out, srcLang: msg.srcLang, tgt: msg.tgt, tcode: msg.tcode, pron: msg.pron }, ev.currentTarget)),
+            iconBtn('fa-solid fa-expand', UI.big_show, () => showBig(msg.out, msg.pron, 'auto')),
             iconBtn('fa-solid fa-pen', UI.edit_translation, () => {
                 const v = prompt(UI.edit_prompt, msg.out);
                 if (v === null) return;
@@ -90,13 +84,13 @@ function buildBubble(msg) {
     }
     if (msg.out) addActions();
 
-    b.append(head, orig, trans, actions, note);
+    b.append(head, orig, trans, pron, actions, note);
     wrap.appendChild(b);
     const log = $('conv-log');
     log.appendChild(wrap);
     log.scrollTop = log.scrollHeight;
     return {
-        done() { trans.textContent = msg.out; addActions(); log.scrollTop = log.scrollHeight; },
+        done() { trans.textContent = msg.out; pron.textContent = msg.pron || ''; pron.classList.toggle('hidden', !msg.pron); addActions(); log.scrollTop = log.scrollHeight; },
         fail(text) { trans.textContent = text; trans.classList.add('text-red-300'); },
         remove() { wrap.remove(); if (!log.children.length) $('conv-empty').classList.remove('hidden'); },
     };
@@ -112,12 +106,13 @@ async function converse(side, text) {
         const r = await fetch('/api/translate-text', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, source: src, target: tgt, context, glossary: relevantGlossary(text, tgt) }),
+            body: JSON.stringify({ text, source: src, target: tgt, context, glossary: relevantGlossary(text, tgt), formality: loadSettings().formality, pron: loadSettings().pron }),
         });
         let data = {};
         try { data = await r.json(); } catch (e) {}
         if (!r.ok || !data.translation) throw new Error(data.error || UI.err_failed);
         msg.out = data.translation;
+        msg.pron = data.pronunciation || '';
         bubble.done();
         const list = loadChat();
         list.push(msg);
@@ -190,4 +185,9 @@ function clearConversation() {
     $('conv-log').replaceChildren();
     $('conv-empty').classList.remove('hidden');
     setConvStatus('');
+}
+
+// 2人の言語が同じなら警告を出す
+function checkChatSame() {
+    $('conv-warn').classList.toggle('hidden', convLangs.A !== convLangs.B);
 }

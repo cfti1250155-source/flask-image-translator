@@ -1,0 +1,138 @@
+<!-- 6. 履歴・お気に入り・用語集（この端末の localStorage に保存） -->
+<div id="tab-history" class="tab-content hidden space-y-3">
+    <div class="flex items-center justify-between gap-2">
+        <div class="flex gap-1 flex-wrap">
+            <button type="button" id="hf-all" onclick="setHistFilter('all')" class="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition">{{ ui.filter_all }}</button>
+            <button type="button" id="hf-fav" onclick="setHistFilter('fav')" class="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition"><i class="fa-solid fa-star text-yellow-400"></i> {{ ui.filter_fav }}</button>
+            <button type="button" id="hf-gl" onclick="setHistFilter('gl')" class="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition"><i class="fa-solid fa-book"></i> {{ ui.filter_glossary }}</button>
+            {% if phrase_langs %}<button type="button" id="hf-phrases" onclick="setHistFilter('phrases')" class="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition"><i class="fa-solid fa-comment-dots"></i> {{ ui.filter_phrases }}</button>{% endif %}
+            <button type="button" id="hf-study" onclick="setHistFilter('study')" class="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition"><i class="fa-solid fa-graduation-cap"></i> {{ ui.filter_study }}</button>
+            {% if offline_page %}<button type="button" id="hf-settings" onclick="setHistFilter('settings')" class="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition"><i class="fa-solid fa-gear"></i> {{ ui.filter_settings }}</button>
+            {% endif %}        </div>
+        <button type="button" id="history-clear-btn" onclick="clearHistory()" class="text-xs text-slate-400 hover:text-red-300 transition flex-shrink-0"><i class="fa-solid fa-trash"></i> {{ ui.clear_history }}</button>
+    </div>
+    <p class="text-[11px] text-slate-500">{{ ui.history_note }}</p>
+
+    <div id="history-section" class="space-y-2">
+        <div id="history-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
+        <p id="history-empty" class="hidden text-center text-sm text-slate-500 py-6">{{ ui.history_empty }}</p>
+    </div>
+
+    <div id="phrase-section" class="hidden space-y-3">
+        <p class="text-[11px] text-slate-400">{{ ui.phrase_note }}</p>
+        <div class="flex gap-2 items-center">
+            <span class="text-[11px] text-slate-400 flex-shrink-0">{{ ui.phrase_lang }}</span>
+            <select id="phrase-lang" aria-label="{{ ui.phrase_lang }}" class="min-w-0 flex-1 bg-slate-800 text-slate-100 text-sm rounded-xl px-2 py-2 border border-slate-700"></select>
+        </div>
+        <input id="phrase-search" type="search" autocomplete="off" placeholder="{{ ui.phrase_search }}"
+               class="w-full px-3 py-2 rounded-xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-600 text-sm">
+        <p id="phrase-status" class="hidden text-center text-sm text-amber-200 py-3"></p>
+        <div id="phrase-list" class="space-y-2 max-h-[28rem] overflow-y-auto"></div>
+        <p id="phrase-empty" class="hidden text-center text-sm text-slate-500 py-4">{{ ui.phrase_empty }}</p>
+    </div>
+
+    <div id="study-section" class="hidden space-y-3">
+        <div class="rounded-2xl border border-indigo-800/60 bg-indigo-950/30 p-3 space-y-2">
+            <p id="study-stats" class="text-xs text-slate-300"></p>
+            <button type="button" id="study-start" onclick="startStudy()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl py-2.5 transition"><i class="fa-solid fa-play"></i> {{ ui.study_start }}</button>
+            <p id="study-msg" class="hidden text-sm text-center text-emerald-300 py-1"></p>
+        </div>
+        <div id="study-card" class="hidden rounded-2xl border border-slate-700 bg-slate-950/60 p-4 space-y-3 text-center">
+            <p id="study-left" class="text-[11px] text-slate-500"></p>
+            <div id="study-front" dir="auto" class="text-lg font-semibold text-slate-100 whitespace-pre-wrap break-words"></div>
+            <div id="study-back" class="hidden space-y-1">
+                <div id="study-answer" dir="auto" class="text-lg font-semibold text-indigo-200 whitespace-pre-wrap break-words"></div>
+                <div id="study-pron" dir="auto" class="text-sm text-indigo-300 whitespace-pre-wrap"></div>
+                <button type="button" id="study-speak" aria-label="{{ ui.speak }}" class="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition"><i class="fa-solid fa-volume-high"></i></button>
+            </div>
+            <button type="button" id="study-reveal" onclick="revealStudy()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm font-semibold rounded-xl py-2.5 transition">{{ ui.study_reveal }}</button>
+            <div id="study-grade" class="hidden grid grid-cols-2 gap-2">
+                <button type="button" onclick="gradeStudy(false)" class="bg-slate-800 hover:bg-slate-700 text-red-300 text-sm font-semibold rounded-xl py-2.5 transition">{{ ui.study_again }}</button>
+                <button type="button" onclick="gradeStudy(true)" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl py-2.5 transition">{{ ui.study_good }}</button>
+            </div>
+        </div>
+        <p class="text-xs font-semibold text-slate-300">{{ ui.study_list }}</p>
+        <div id="study-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
+        <p id="study-empty" class="hidden text-center text-sm text-slate-500 py-4">{{ ui.study_empty }}</p>
+    </div>
+
+    <div id="settings-section" class="hidden space-y-5">
+        <p class="text-sm font-bold text-slate-100"><i class="fa-solid fa-gear text-indigo-400"></i> {{ ui.filter_settings }}</p>
+
+        <!-- 翻訳 -->
+        <div class="space-y-3">
+            <p class="text-[11px] font-bold text-indigo-300 uppercase tracking-wider">{{ ui.set_group_translate }}</p>
+            <div class="space-y-1.5">
+                <p class="text-xs font-semibold text-slate-300">{{ ui.set_formality }}</p>
+                <div class="grid grid-cols-3 gap-1.5" data-setting="formality">
+                    <button type="button" data-v="auto" class="set-opt">{{ ui.formality_auto }}</button>
+                    <button type="button" data-v="formal" class="set-opt">{{ ui.formality_formal }}</button>
+                    <button type="button" data-v="casual" class="set-opt">{{ ui.formality_casual }}</button>
+                </div>
+            </div>
+            <label class="flex items-center gap-2 cursor-pointer text-sm text-slate-200"><input type="checkbox" id="set-pron" class="accent-indigo-500"> {{ ui.set_pron }}</label>
+        </div>
+
+        <!-- 表示 -->
+        <div class="space-y-3">
+            <p class="text-[11px] font-bold text-indigo-300 uppercase tracking-wider">{{ ui.set_group_display }}</p>
+            <div class="space-y-1.5">
+                <p class="text-xs font-semibold text-slate-300">{{ ui.set_fontsize }}</p>
+                <div class="grid grid-cols-3 gap-1.5" data-setting="fs">
+                    <button type="button" data-v="m" class="set-opt">{{ ui.fs_m }}</button>
+                    <button type="button" data-v="l" class="set-opt">{{ ui.fs_l }}</button>
+                    <button type="button" data-v="xl" class="set-opt">{{ ui.fs_xl }}</button>
+                </div>
+            </div>
+            <div class="space-y-1.5">
+                <p class="text-xs font-semibold text-slate-300">{{ ui.set_theme }}</p>
+                <div class="grid grid-cols-2 gap-1.5" data-setting="theme">
+                    <button type="button" data-v="dark" class="set-opt"><i class="fa-solid fa-moon"></i> {{ ui.theme_dark }}</button>
+                    <button type="button" data-v="light" class="set-opt"><i class="fa-solid fa-sun"></i> {{ ui.theme_light }}</button>
+                </div>
+            </div>
+            <p class="text-[11px] text-slate-500">{{ ui.set_note }}</p>
+        </div>
+
+        <!-- データ（バックアップ・全削除・ホーム画面に追加） -->
+        <div class="space-y-3">
+            <p class="text-[11px] font-bold text-indigo-300 uppercase tracking-wider">{{ ui.filter_data }}</p>
+        <div id="data-section" class="space-y-3">
+            <div id="install-box" class="hidden rounded-2xl border border-indigo-800/60 bg-indigo-950/30 p-3 space-y-2">
+                <p class="text-xs font-semibold text-indigo-200"><i class="fa-solid fa-mobile-screen"></i> {{ ui.install_title }}</p>
+                <p id="install-text" class="text-xs text-slate-300 leading-relaxed"></p>
+                <button type="button" id="install-btn" onclick="installApp()" class="hidden w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl py-2 transition">{{ ui.install_btn }}</button>
+            </div>
+            <p class="text-[11px] text-slate-400">{{ ui.data_hint }}</p>
+            <p id="data-counts" class="text-xs text-slate-300"></p>
+            <p class="text-[11px] text-slate-500"><span id="data-last"></span> <span id="data-persist"></span></p>
+            <p id="data-remind" class="hidden text-xs text-amber-200 bg-amber-950/30 border border-amber-900/50 rounded-xl p-2">{{ ui.backup_remind }}</p>
+            <div class="grid grid-cols-2 gap-2">
+                <button type="button" onclick="exportBackup()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl py-2.5 px-2 transition"><i class="fa-solid fa-file-export"></i> {{ ui.backup_export }}</button>
+                <label class="bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm font-semibold rounded-xl py-2.5 px-2 transition text-center cursor-pointer"><i class="fa-solid fa-file-import"></i> {{ ui.backup_import }}
+                    <input type="file" accept=".json,application/json" class="hidden" onchange="importBackup(this)">
+                </label>
+            </div>
+            <p id="data-status" class="text-xs min-h-[1rem] break-words" role="status"></p>
+            <button type="button" onclick="deleteAllData()" class="w-full text-sm text-red-300 hover:text-red-200 border border-red-900/60 rounded-xl py-2.5 transition"><i class="fa-solid fa-trash"></i> {{ ui.data_delete }}</button>
+        </div>
+        </div>
+    </div>
+
+    <div id="glossary-section" class="hidden space-y-3">
+        <p class="text-[11px] text-slate-400">{{ ui.glossary_hint }}</p>
+        <form onsubmit="return addGlossaryTerm(event)" class="space-y-2">
+            <input id="gl-term" type="text" dir="auto" maxlength="100" required autocomplete="off" placeholder="{{ ui.glossary_term }}"
+                   class="w-full px-3 py-2 rounded-xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-600 text-sm">
+            <input id="gl-meaning" type="text" dir="auto" maxlength="200" required autocomplete="off" placeholder="{{ ui.glossary_meaning }}"
+                   class="w-full px-3 py-2 rounded-xl bg-slate-950/70 text-slate-100 border border-slate-800 focus:outline-none focus:border-indigo-500 placeholder-slate-600 text-sm">
+            <div class="flex gap-2 items-center">
+                <span class="text-[11px] text-slate-400 flex-shrink-0">{{ ui.glossary_target }}</span>
+                <select id="gl-to" class="min-w-0 flex-1 bg-slate-800 text-slate-100 text-sm rounded-xl px-2 py-2 border border-slate-700"></select>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition flex-shrink-0">{{ ui.glossary_add }}</button>
+            </div>
+        </form>
+        <div id="glossary-list" class="space-y-2 max-h-72 overflow-y-auto"></div>
+        <p id="glossary-empty" class="hidden text-center text-sm text-slate-500 py-4">{{ ui.glossary_empty }}</p>
+    </div>
+</div>
